@@ -1,0 +1,12 @@
+# Binaries
+bin/
+
+# Environment variables
+.env
+
+# Temporary files
+tmp/
+
+# OS Specific
+.DS_Store
+
