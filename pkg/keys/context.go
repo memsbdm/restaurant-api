@@ -1,4 +1,4 @@
-package contextkeys
+package keys
 
 import (
 	"context"
@@ -10,8 +10,8 @@ import (
 type ContextKey string
 
 const (
-	UserIDContextKey    ContextKey = "userID"
-	SignedOATContextKey ContextKey = "signedOAT"
+	UserIDContextKey  ContextKey = "userID"
+	AuthOATContextKey ContextKey = "authOAT"
 )
 
 func GetValueFromContext(ctx context.Context, key ContextKey) (string, error) {

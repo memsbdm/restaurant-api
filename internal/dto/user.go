@@ -18,6 +18,15 @@ type UserDTO struct {
 	AvatarURL       *string   `json:"avatar_url"`
 }
 
+func (u *UserDTO) ToUpdateParams() codegen.UpdateUserParams {
+	return codegen.UpdateUserParams{
+		ID:              u.ID,
+		Email:           u.Email,
+		IsEmailVerified: u.IsEmailVerified,
+		AvatarUrl:       u.AvatarURL,
+	}
+}
+
 func NewUserDTO(user codegen.User) UserDTO {
 	return UserDTO{
 		ID:              user.ID,

@@ -13,14 +13,20 @@ var (
 	ErrInternal           = errors.New("internal error")
 	ErrServiceUnavailable = errors.New("service unavailable")
 
-	// Cache
-	ErrCacheNotFound = errors.New("cache not found")
+	// Token
+	ErrInvalidToken = errors.New("invalid or expired token")
 
 	// Conflict
 	ErrEmailConflict = errors.New("email already taken")
 
 	// Auth
 	ErrInvalidCredentials = errors.New("invalid credentials")
+)
+
+// Not returned to the client
+var (
+	// Cache
+	ErrCacheNotFound = errors.New("cache not found")
 )
 
 var ErrToHttpStatusCode = map[error]int{
@@ -33,6 +39,9 @@ var ErrToHttpStatusCode = map[error]int{
 
 	// Conflict
 	ErrEmailConflict: http.StatusConflict,
+
+	// Token
+	ErrInvalidToken: http.StatusBadRequest,
 
 	// Auth
 	ErrInvalidCredentials: http.StatusUnauthorized,

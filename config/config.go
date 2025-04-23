@@ -18,12 +18,14 @@ type (
 		App      *App
 		Cache    *Cache
 		DB       *DB
+		Mailer   *Mailer
 		Security *Security
 		Server   *Server
 	}
 
 	App struct {
-		Env string
+		Env  string
+		Host string
 	}
 
 	Cache struct {
@@ -43,8 +45,17 @@ type (
 		MaxIdleTime time.Duration
 	}
 
+	Mailer struct {
+		Region    string
+		AccessKey string
+		SecretKey string
+		From      string
+		DebugTo   string
+	}
+
 	Security struct {
 		OATSignature []byte
+		SPTSignature []byte
 	}
 
 	Server struct {
@@ -54,7 +65,8 @@ type (
 
 func New() *Container {
 	app := &App{
-		Env: env.GetString("ENVIRONMENT"),
+		Env:  env.GetString("ENVIRONMENT"),
+		Host: env.GetString("HOST"),
 	}
 
 	cache := &Cache{
@@ -74,8 +86,17 @@ func New() *Container {
 		MaxIdleTime: env.GetOptionalDuration("MAX_IDLE_TIME", 15*time.Minute),
 	}
 
+	mailer := &Mailer{
+		Region:    env.GetString("MAILER_REGION"),
+		AccessKey: env.GetString("MAILER_ACCESS_KEY"),
+		SecretKey: env.GetString("MAILER_SECRET_KEY"),
+		From:      env.GetString("MAILER_FROM"),
+		DebugTo:   env.GetString("MAILER_DEBUG_TO"),
+	}
+
 	security := &Security{
 		OATSignature: env.GetBytes("OAT_SIGNATURE"),
+		SPTSignature: env.GetBytes("SPT_SIGNATURE"),
 	}
 
 	server := &Server{
@@ -86,6 +107,7 @@ func New() *Container {
 		App:      app,
 		Cache:    cache,
 		DB:       db,
+		Mailer:   mailer,
 		Security: security,
 		Server:   server,
 	}

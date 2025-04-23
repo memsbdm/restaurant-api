@@ -8,41 +8,43 @@ import (
 	"github.com/memsbdm/restaurant-api/internal/handler"
 	"github.com/memsbdm/restaurant-api/internal/response"
 	"github.com/memsbdm/restaurant-api/internal/service"
-	"github.com/memsbdm/restaurant-api/pkg/contextkeys"
+	"github.com/memsbdm/restaurant-api/pkg/keys"
+	"github.com/memsbdm/restaurant-api/pkg/security"
 )
 
-func AuthMiddleware(authSvc service.AuthService) Middle {
+func AuthMiddleware(tokenSvc service.TokenService) Middle {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			signedOAT, err := extractSignedOATFromRequest(r)
+			oat, err := extractAuthOATFromRequest(r)
 			if err != nil {
 				response.HandleError(w, err)
 				return
 			}
 
-			userID, err := authSvc.GetUserIDFromSignedOAT(r.Context(), signedOAT)
+			userID, err := tokenSvc.VerifyOAT(r.Context(), keys.AuthToken, oat)
 			if err != nil {
 				response.HandleError(w, response.ErrUnauthorized)
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), contextkeys.UserIDContextKey, userID)
-			ctx = context.WithValue(ctx, contextkeys.SignedOATContextKey, signedOAT)
+			ctx := context.WithValue(r.Context(), keys.UserIDContextKey, userID)
+			decodedOAT, _ := security.DecodeTokenURLSafe(oat)
+			ctx = context.WithValue(ctx, keys.AuthOATContextKey, decodedOAT)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
-func GuestMiddleware(authSvc service.AuthService) Middle {
+func GuestMiddleware(tokenSvc service.TokenService) Middle {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			signedOAT, err := extractSignedOATFromRequest(r)
+			oat, err := extractAuthOATFromRequest(r)
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return
 			}
 
-			_, err = authSvc.GetUserIDFromSignedOAT(r.Context(), signedOAT)
+			_, err = tokenSvc.VerifyOAT(r.Context(), keys.AuthToken, oat)
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return
@@ -53,22 +55,22 @@ func GuestMiddleware(authSvc service.AuthService) Middle {
 	}
 }
 
-func extractSignedOATFromRequest(r *http.Request) (string, error) {
-	var signedOAT string
+func extractAuthOATFromRequest(r *http.Request) (string, error) {
+	var oat string
 	var err error
 	if handler.IsMobileRequest(r) {
-		signedOAT, err = getSignedOATFromHeader(r)
+		oat, err = getAuthOATFromHeader(r)
 	} else {
-		signedOAT, err = getSignedOATFromCookie(r)
+		oat, err = getAuthOATFromCookie(r)
 	}
 
 	if err != nil {
 		return "", err
 	}
-	return signedOAT, nil
+	return oat, nil
 }
 
-func getSignedOATFromCookie(r *http.Request) (string, error) {
+func getAuthOATFromCookie(r *http.Request) (string, error) {
 	cookie, err := r.Cookie("go-session")
 	if err != nil {
 		return "", err
@@ -77,7 +79,7 @@ func getSignedOATFromCookie(r *http.Request) (string, error) {
 	return cookie.Value, nil
 }
 
-func getSignedOATFromHeader(r *http.Request) (string, error) {
+func getAuthOATFromHeader(r *http.Request) (string, error) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		return "", response.ErrUnauthorized

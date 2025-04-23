@@ -7,6 +7,8 @@ package codegen
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -41,6 +43,61 @@ SELECT id, created_at, updated_at, name, email, password, is_email_verified, ava
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.IsEmailVerified,
+		&i.AvatarUrl,
+	)
+	return i, err
+}
+
+const getUserById = `-- name: GetUserById :one
+SELECT id, created_at, updated_at, name, email, password, is_email_verified, avatar_url FROM users WHERE id = $1
+`
+
+func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, getUserById, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.IsEmailVerified,
+		&i.AvatarUrl,
+	)
+	return i, err
+}
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE users
+SET email = $1, is_email_verified = $2, avatar_url= $3
+WHERE id = $4
+RETURNING id, created_at, updated_at, name, email, password, is_email_verified, avatar_url
+`
+
+type UpdateUserParams struct {
+	Email           string
+	IsEmailVerified bool
+	AvatarUrl       *string
+	ID              uuid.UUID
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUser,
+		arg.Email,
+		arg.IsEmailVerified,
+		arg.AvatarUrl,
+		arg.ID,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,

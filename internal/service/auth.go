@@ -3,39 +3,34 @@ package service
 import (
 	"context"
 	"strings"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/memsbdm/restaurant-api/config"
 	"github.com/memsbdm/restaurant-api/internal/cache"
 	"github.com/memsbdm/restaurant-api/internal/dto"
 	"github.com/memsbdm/restaurant-api/internal/response"
+	"github.com/memsbdm/restaurant-api/pkg/keys"
 	"github.com/memsbdm/restaurant-api/pkg/security"
-)
-
-const (
-	OATCachePrefix   = "oat"
-	OATCacheDuration = 7 * 24 * time.Hour
 )
 
 type AuthService interface {
 	Register(ctx context.Context, user *dto.CreateUserDto) (dto.UserDTO, string, error)
 	Login(ctx context.Context, email, password string) (dto.UserDTO, string, error)
-	GetUserIDFromSignedOAT(ctx context.Context, signedOAT string) (string, error)
-	Logout(ctx context.Context, signedOAT string) error
+	Logout(ctx context.Context, oat string) error
 }
 
 type authService struct {
-	cfg         *config.Security
-	cache       cache.Cache
-	userService UserService
+	cfg          *config.Security
+	cache        cache.Cache
+	tokenService TokenService
+	userService  UserService
 }
 
-func NewAuthService(cfg *config.Security, cache cache.Cache, userService UserService) *authService {
+func NewAuthService(cfg *config.Security, cache cache.Cache, userService UserService, tokenService TokenService) *authService {
 	return &authService{
-		cfg:         cfg,
-		cache:       cache,
-		userService: userService,
+		cfg:          cfg,
+		cache:        cache,
+		tokenService: tokenService,
+		userService:  userService,
 	}
 }
 
@@ -45,12 +40,16 @@ func (s *authService) Register(ctx context.Context, user *dto.CreateUserDto) (dt
 		return dto.UserDTO{}, "", err
 	}
 
-	signedOAT, err := s.generateSignedOAT(ctx, createdUser.ID)
+	if err := s.userService.SendVerificationEmail(ctx, createdUser); err != nil {
+		return dto.UserDTO{}, "", err
+	}
+
+	oat, err := s.tokenService.GenerateOAT(ctx, keys.AuthToken, createdUser.ID.String(), keys.AuthTokenDuration)
 	if err != nil {
 		return dto.UserDTO{}, "", err
 	}
 
-	return createdUser, signedOAT, nil
+	return createdUser, oat, nil
 }
 
 func (s *authService) Login(ctx context.Context, email, password string) (dto.UserDTO, string, error) {
@@ -64,56 +63,19 @@ func (s *authService) Login(ctx context.Context, email, password string) (dto.Us
 		return dto.UserDTO{}, "", response.ErrInvalidCredentials
 	}
 
-	signedOAT, err := s.generateSignedOAT(ctx, fetchedUser.ID)
+	oat, err := s.tokenService.GenerateOAT(ctx, keys.AuthToken, fetchedUser.ID.String(), keys.AuthTokenDuration)
 	if err != nil {
 		return dto.UserDTO{}, "", err
 	}
 
-	return fetchedUser, signedOAT, nil
+	return fetchedUser, oat, nil
 }
 
-func (s *authService) Logout(ctx context.Context, signedOAT string) error {
-	parts := strings.Split(signedOAT, ".")
+func (s *authService) Logout(ctx context.Context, oat string) error {
+	parts := strings.Split(oat, ".")
 	if len(parts) != 2 {
 		return response.ErrUnauthorized
 	}
 
-	return s.cache.Delete(ctx, cache.GenerateKey(OATCachePrefix, parts[0]))
-}
-
-func (s *authService) GetUserIDFromSignedOAT(ctx context.Context, signedOAT string) (string, error) {
-	parts := strings.Split(signedOAT, ".")
-	if len(parts) != 2 {
-		return "", response.ErrUnauthorized
-	}
-
-	oat, signature := parts[0], parts[1]
-	hasValidSignature := security.VerifySignature(oat, signature, s.cfg.OATSignature)
-	if !hasValidSignature {
-		return "", response.ErrUnauthorized
-	}
-
-	userID, err := s.cache.Get(ctx, cache.GenerateKey(OATCachePrefix, oat))
-	if err != nil {
-		return "", err
-	}
-
-	return string(userID), nil
-}
-
-func (s *authService) generateSignedOAT(ctx context.Context, userID uuid.UUID) (string, error) {
-	oat, err := security.GenerateRandomString(32)
-	if err != nil {
-		return "", err
-	}
-
-	err = s.cache.Set(ctx, cache.GenerateKey(OATCachePrefix, oat), []byte(userID.String()), OATCacheDuration)
-	if err != nil {
-		return "", err
-	}
-
-	signature := security.SignString(oat, s.cfg.OATSignature)
-	signedOAT := string(oat) + "." + signature
-
-	return signedOAT, nil
+	return s.cache.Delete(ctx, cache.GenerateKey(string(keys.AuthToken), parts[0]))
 }

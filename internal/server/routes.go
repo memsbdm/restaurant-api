@@ -15,6 +15,10 @@ func registerRoutes(h *handler.Handlers, m *middleware.Middleware) http.Handler 
 	r.Handle("POST /auth/login", m.Guest(h.AuthHandler.Login))
 	r.Handle("DELETE /auth/logout", m.Auth(h.AuthHandler.Logout))
 
+	// Users
+	r.HandleFunc("GET /users/verify-email", h.VerifyEmailHandler.VerifyEmail)
+	r.Handle("POST /users/verify-email/resend", m.Auth(h.VerifyEmailHandler.ResendVerificationEmail))
+
 	// Sub-routes
 	apiV1 := http.NewServeMux()
 	apiV1.Handle("/api/v1/", http.StripPrefix("/api/v1", r))

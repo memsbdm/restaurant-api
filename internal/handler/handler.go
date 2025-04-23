@@ -8,12 +8,14 @@ import (
 )
 
 type Handlers struct {
-	AuthHandler *AuthHandler
+	AuthHandler        *AuthHandler
+	VerifyEmailHandler *VerifyEmailHandler
 }
 
 func New(cfg *config.Container, services *service.Services) *Handlers {
 	return &Handlers{
-		AuthHandler: NewAuthHandler(cfg.App, services.AuthService),
+		AuthHandler:        NewAuthHandler(cfg.App, services.AuthService),
+		VerifyEmailHandler: NewVerifyEmailHandler(services.UserService),
 	}
 }
 

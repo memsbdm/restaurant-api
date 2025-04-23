@@ -12,6 +12,9 @@ import (
 func HandleSuccess(w http.ResponseWriter, statusCode int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
+	if data == nil {
+		return
+	}
 	json.NewEncoder(w).Encode(data)
 }
 

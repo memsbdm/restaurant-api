@@ -9,7 +9,7 @@ import (
 	"github.com/memsbdm/restaurant-api/internal/response"
 	"github.com/memsbdm/restaurant-api/internal/service"
 	"github.com/memsbdm/restaurant-api/internal/validation"
-	"github.com/memsbdm/restaurant-api/pkg/contextkeys"
+	"github.com/memsbdm/restaurant-api/pkg/keys"
 )
 
 type AuthHandler struct {
@@ -38,7 +38,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createdUser, signedOAT, err := h.authSvc.Register(r.Context(), &dto.CreateUserDto{
+	createdUser, oat, err := h.authSvc.Register(r.Context(), &dto.CreateUserDto{
 		Name:     strings.TrimSpace(request.Name),
 		Email:    strings.TrimSpace(request.Email),
 		Password: request.Password,
@@ -51,12 +51,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if IsMobileRequest(r) {
 		response.HandleSuccess(w, http.StatusCreated, map[string]any{
 			"user":         createdUser,
-			"access_token": signedOAT,
+			"access_token": oat,
 		})
 		return
 	}
 
-	setAuthCookie(w, signedOAT, h.cfg.Env)
+	setAuthCookie(w, oat, h.cfg.Env)
 	response.HandleSuccess(w, http.StatusCreated, createdUser)
 }
 
@@ -73,7 +73,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fetchedUser, signedOAT, err := h.authSvc.Login(r.Context(), strings.TrimSpace(request.Email), request.Password)
+	fetchedUser, oat, err := h.authSvc.Login(r.Context(), strings.TrimSpace(request.Email), request.Password)
 	if err != nil {
 		response.HandleError(w, err)
 		return
@@ -82,23 +82,23 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if IsMobileRequest(r) {
 		response.HandleSuccess(w, http.StatusCreated, map[string]any{
 			"user":         fetchedUser,
-			"access_token": signedOAT,
+			"access_token": oat,
 		})
 		return
 	}
 
-	setAuthCookie(w, signedOAT, h.cfg.Env)
+	setAuthCookie(w, oat, h.cfg.Env)
 	response.HandleSuccess(w, http.StatusCreated, fetchedUser)
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	signedOAT, err := contextkeys.GetValueFromContext(r.Context(), contextkeys.SignedOATContextKey)
+	oat, err := keys.GetValueFromContext(r.Context(), keys.AuthOATContextKey)
 	if err != nil {
 		response.HandleError(w, err)
 		return
 	}
 
-	err = h.authSvc.Logout(r.Context(), signedOAT)
+	err = h.authSvc.Logout(r.Context(), oat)
 	if err != nil {
 		response.HandleError(w, err)
 		return
@@ -107,10 +107,10 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusNoContent, nil)
 }
 
-func setAuthCookie(w http.ResponseWriter, signedOAT, appEnv string) {
+func setAuthCookie(w http.ResponseWriter, oat, appEnv string) {
 	cookie := &http.Cookie{
 		Name:     "go-session",
-		Value:    signedOAT,
+		Value:    oat,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   appEnv == config.EnvProduction,
