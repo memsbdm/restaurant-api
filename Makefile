@@ -23,6 +23,9 @@ migration:
 migration-down:
 	@cd internal/database/migrations && goose postgres "$(DB_ADDR)" down
 
+migration-rollback:
+	@cd internal/database/migrations && goose postgres "$(DB_ADDR)" down-to 0
+
 migration-up:
 	@cd internal/database/migrations && goose postgres "$(DB_ADDR)" up
 
@@ -30,5 +33,5 @@ run:
 	@go run cmd/http/*.go
 
 
-.PHONY:  build clean codegen migration migration-down migration-up run
+.PHONY:  build clean codegen migration migration-down migration-rollback migration-up run
 
