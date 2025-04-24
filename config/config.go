@@ -18,6 +18,7 @@ type (
 		App      *App
 		Cache    *Cache
 		DB       *DB
+		Google   *Google
 		Mailer   *Mailer
 		Security *Security
 		Server   *Server
@@ -43,6 +44,10 @@ type (
 		MaxIdleConn int
 		MaxOpenConn int
 		MaxIdleTime time.Duration
+	}
+
+	Google struct {
+		APIKey string
 	}
 
 	Mailer struct {
@@ -86,6 +91,10 @@ func New() *Container {
 		MaxIdleTime: env.GetOptionalDuration("MAX_IDLE_TIME", 15*time.Minute),
 	}
 
+	google := &Google{
+		APIKey: env.GetString("GOOGLE_API_KEY"),
+	}
+
 	mailer := &Mailer{
 		Region:    env.GetString("MAILER_REGION"),
 		AccessKey: env.GetString("MAILER_ACCESS_KEY"),
@@ -107,6 +116,7 @@ func New() *Container {
 		App:      app,
 		Cache:    cache,
 		DB:       db,
+		Google:   google,
 		Mailer:   mailer,
 		Security: security,
 		Server:   server,

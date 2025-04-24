@@ -36,4 +36,8 @@ var ErrToHttpStatusCode = map[error]int{
 
 	// Mailer
 	service.ErrMailerUnavailable: http.StatusServiceUnavailable,
+
+	// Google
+	service.ErrGoogleServiceUnavailable:      http.StatusServiceUnavailable,
+	service.ErrGoogleAutocompleteQueryLength: http.StatusBadRequest,
 }

@@ -9,12 +9,14 @@ import (
 
 type Services struct {
 	AuthService   AuthService
+	GoogleService GoogleService
 	MailerService MailerService
 	TokenService  TokenService
 	UserService   UserService
 }
 
 func New(cfg *config.Container, repos *repository.Repositories, cache cache.Cache, mailer mailer.Mailer) *Services {
+	googleSvc := NewGoogleService(cfg.Google)
 	tokenSvc := NewTokenService(cfg.Security, cache)
 	mailerSvc := NewMailerService(cfg.Mailer, mailer)
 	userSvc := NewUserService(cfg.App, repos.UserRepository, tokenSvc, mailerSvc)
@@ -22,6 +24,7 @@ func New(cfg *config.Container, repos *repository.Repositories, cache cache.Cach
 
 	return &Services{
 		AuthService:   authSvc,
+		GoogleService: googleSvc,
 		MailerService: mailerSvc,
 		TokenService:  tokenSvc,
 		UserService:   userSvc,
