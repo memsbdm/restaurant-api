@@ -45,7 +45,7 @@ func (s *tokenService) GenerateOAT(ctx context.Context, keyPrefix keys.OAT, data
 		return "", err
 	}
 
-	signature := security.SignString(oat, s.cfg.OATSignature)
+	signature := security.SignString(oat, s.cfg.OATSecret)
 	signedOAT := fmt.Sprintf("%s.%s", oat, signature)
 
 	return security.EncodeTokenURLSafe(signedOAT), nil
@@ -63,7 +63,7 @@ func (s *tokenService) VerifyOAT(ctx context.Context, keyPrefix keys.OAT, encode
 	}
 
 	oat, signature := parts[0], parts[1]
-	hasValidSignature := security.VerifySignature(oat, signature, s.cfg.OATSignature)
+	hasValidSignature := security.VerifySignature(oat, signature, s.cfg.OATSecret)
 	if !hasValidSignature {
 		return "", response.ErrInvalidToken
 	}
@@ -81,7 +81,7 @@ func (s *tokenService) VerifyOAT(ctx context.Context, keyPrefix keys.OAT, encode
 
 func (s *tokenService) GenerateSPT(ctx context.Context, keyPrefix keys.SPT, data string, ttl time.Duration) (string, error) {
 	// Format: <user_id>.<signature>
-	signature := security.SignString(data, s.cfg.SPTSignature)
+	signature := security.SignString(data, s.cfg.SPTSecret)
 	signedSPT := fmt.Sprintf("%s.%s", data, signature)
 
 	err := s.cache.Set(ctx, cache.GenerateKey(string(keyPrefix), data), []byte(data), ttl)
@@ -104,7 +104,7 @@ func (s *tokenService) VerifySPT(ctx context.Context, keyPrefix keys.SPT, encode
 	}
 
 	spt, signature := parts[0], parts[1]
-	hasValidSignature := security.VerifySignature(spt, signature, s.cfg.SPTSignature)
+	hasValidSignature := security.VerifySignature(spt, signature, s.cfg.SPTSecret)
 	if !hasValidSignature {
 		return "", response.ErrInvalidToken
 	}

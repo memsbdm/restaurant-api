@@ -54,8 +54,8 @@ type (
 	}
 
 	Security struct {
-		OATSignature []byte
-		SPTSignature []byte
+		OATSecret []byte
+		SPTSecret []byte
 	}
 
 	Server struct {
@@ -95,8 +95,8 @@ func New() *Container {
 	}
 
 	security := &Security{
-		OATSignature: env.GetBytes("OAT_SIGNATURE"),
-		SPTSignature: env.GetBytes("SPT_SIGNATURE"),
+		OATSecret: env.GetBytes("OAT_SECRET"),
+		SPTSecret: env.GetBytes("SPT_SECRET"),
 	}
 
 	server := &Server{
