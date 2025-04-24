@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"errors"
 	"html/template"
 	"log"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/memsbdm/restaurant-api/internal/mailer"
 	"github.com/memsbdm/restaurant-api/internal/mailer/mailtemplates"
 )
+
+var ErrMailerUnavailable = errors.New("mailer service unavailable")
 
 type MailerService interface {
 	Send(mail *mailer.Mail) error
@@ -35,8 +38,11 @@ func (s *mailerService) Send(mail *mailer.Mail) error {
 		Subject: mail.Subject,
 		Body:    mail.Body,
 	})
+	if err != nil {
+		return ErrMailerUnavailable
+	}
 
-	return err
+	return nil
 }
 
 func (s *mailerService) RenderTemplate(name string, data any) (string, error) {

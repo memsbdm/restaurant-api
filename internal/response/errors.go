@@ -3,6 +3,8 @@ package response
 import (
 	"errors"
 	"net/http"
+
+	"github.com/memsbdm/restaurant-api/internal/service"
 )
 
 var (
@@ -12,21 +14,6 @@ var (
 	ErrUnauthorized       = errors.New("unauthorized access")
 	ErrInternal           = errors.New("internal error")
 	ErrServiceUnavailable = errors.New("service unavailable")
-
-	// Token
-	ErrInvalidToken = errors.New("invalid or expired token")
-
-	// Conflict
-	ErrEmailConflict = errors.New("email already taken")
-
-	// Auth
-	ErrInvalidCredentials = errors.New("invalid credentials")
-)
-
-// Not returned to the client
-var (
-	// Cache
-	ErrCacheNotFound = errors.New("cache not found")
 )
 
 var ErrToHttpStatusCode = map[error]int{
@@ -38,11 +25,15 @@ var ErrToHttpStatusCode = map[error]int{
 	ErrServiceUnavailable: http.StatusServiceUnavailable,
 
 	// Conflict
-	ErrEmailConflict: http.StatusConflict,
+	service.ErrEmailConflict:        http.StatusConflict,
+	service.ErrEmailAlreadyVerified: http.StatusForbidden,
 
 	// Token
-	ErrInvalidToken: http.StatusBadRequest,
+	service.ErrInvalidToken: http.StatusBadRequest,
 
 	// Auth
-	ErrInvalidCredentials: http.StatusUnauthorized,
+	service.ErrInvalidCredentials: http.StatusUnauthorized,
+
+	// Mailer
+	service.ErrMailerUnavailable: http.StatusServiceUnavailable,
 }

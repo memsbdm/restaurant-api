@@ -2,15 +2,20 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/memsbdm/restaurant-api/config"
 	"github.com/memsbdm/restaurant-api/internal/dto"
 	"github.com/memsbdm/restaurant-api/internal/mailer"
 	"github.com/memsbdm/restaurant-api/internal/repository"
-	"github.com/memsbdm/restaurant-api/internal/response"
 	"github.com/memsbdm/restaurant-api/pkg/keys"
 	"github.com/memsbdm/restaurant-api/pkg/security"
+)
+
+var (
+	ErrEmailConflict        = errors.New("email already taken")
+	ErrEmailAlreadyVerified = errors.New("email already verified")
 )
 
 type UserService interface {
@@ -64,7 +69,7 @@ func (s *userService) Create(ctx context.Context, user *dto.CreateUserDto) (dto.
 	}
 
 	if emailTaken {
-		return dto.UserDTO{}, response.ErrEmailConflict
+		return dto.UserDTO{}, ErrEmailConflict
 	}
 
 	hashedPassword, err := security.HashPassword(user.Password)
@@ -147,7 +152,7 @@ func (s *userService) ResendVerificationEmail(ctx context.Context, userID uuid.U
 	}
 
 	if dbUser.IsEmailVerified {
-		return response.ErrForbidden
+		return ErrEmailAlreadyVerified
 	}
 
 	return s.SendVerificationEmail(ctx, dto.NewUserDTO(dbUser))

@@ -29,7 +29,8 @@ func AuthMiddleware(tokenSvc service.TokenService) Middle {
 
 			ctx := context.WithValue(r.Context(), keys.UserIDContextKey, userID)
 			decodedOAT, _ := security.DecodeTokenURLSafe(oat)
-			ctx = context.WithValue(ctx, keys.AuthOATContextKey, decodedOAT)
+			oat = strings.Split(decodedOAT, ".")[0]
+			ctx = context.WithValue(ctx, keys.AuthOATContextKey, oat)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

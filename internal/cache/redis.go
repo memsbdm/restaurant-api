@@ -9,9 +9,10 @@ import (
 	"time"
 
 	"github.com/memsbdm/restaurant-api/config"
-	"github.com/memsbdm/restaurant-api/internal/response"
 	"github.com/redis/go-redis/v9"
 )
+
+var ErrCacheNotFound = errors.New("cache not found")
 
 type Cache interface {
 	Set(ctx context.Context, key string, value []byte, ttl time.Duration) error
@@ -58,7 +59,7 @@ func (c *cache) Get(ctx context.Context, key string) ([]byte, error) {
 	res, err := c.client.Get(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return nil, response.ErrCacheNotFound
+			return nil, ErrCacheNotFound
 		}
 		log.Printf("error during cache get: %v", err)
 		return nil, err

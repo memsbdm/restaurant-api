@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/memsbdm/restaurant-api/config"
-	"github.com/memsbdm/restaurant-api/internal/response"
 )
 
 type Mailer interface {
@@ -72,7 +71,7 @@ func (m *mailer) Send(mail *Mail) error {
 	msgID, err := m.session.SendEmail(sesInput)
 	if err != nil {
 		log.Printf("error sending email: %v - msgId: %s", err, msgID.String())
-		return response.ErrServiceUnavailable
+		return err
 	}
 
 	log.Printf("mail sent: %s", msgID.String())

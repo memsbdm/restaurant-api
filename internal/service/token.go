@@ -9,10 +9,11 @@ import (
 
 	"github.com/memsbdm/restaurant-api/config"
 	"github.com/memsbdm/restaurant-api/internal/cache"
-	"github.com/memsbdm/restaurant-api/internal/response"
 	"github.com/memsbdm/restaurant-api/pkg/keys"
 	"github.com/memsbdm/restaurant-api/pkg/security"
 )
+
+var ErrInvalidToken = errors.New("invalid or expired token")
 
 type TokenService interface {
 	GenerateOAT(ctx context.Context, keyPrefix keys.OAT, data string, ttl time.Duration) (string, error)
@@ -54,24 +55,24 @@ func (s *tokenService) GenerateOAT(ctx context.Context, keyPrefix keys.OAT, data
 func (s *tokenService) VerifyOAT(ctx context.Context, keyPrefix keys.OAT, encodedOAT string) (string, error) {
 	decodedOAT, err := security.DecodeTokenURLSafe(encodedOAT)
 	if err != nil {
-		return "", response.ErrInvalidToken
+		return "", ErrInvalidToken
 	}
 
 	parts := strings.Split(decodedOAT, ".")
 	if len(parts) != 2 {
-		return "", response.ErrInvalidToken
+		return "", ErrInvalidToken
 	}
 
 	oat, signature := parts[0], parts[1]
 	hasValidSignature := security.VerifySignature(oat, signature, s.cfg.OATSecret)
 	if !hasValidSignature {
-		return "", response.ErrInvalidToken
+		return "", ErrInvalidToken
 	}
 
 	data, err := s.cache.Get(ctx, cache.GenerateKey(string(keyPrefix), oat))
 	if err != nil {
-		if errors.Is(err, response.ErrCacheNotFound) {
-			return "", response.ErrInvalidToken
+		if errors.Is(err, cache.ErrCacheNotFound) {
+			return "", ErrInvalidToken
 		}
 		return "", err
 	}
@@ -95,24 +96,24 @@ func (s *tokenService) GenerateSPT(ctx context.Context, keyPrefix keys.SPT, data
 func (s *tokenService) VerifySPT(ctx context.Context, keyPrefix keys.SPT, encodedSPT string) (string, error) {
 	decodedSPT, err := security.DecodeTokenURLSafe(encodedSPT)
 	if err != nil {
-		return "", response.ErrInvalidToken
+		return "", ErrInvalidToken
 	}
 
 	parts := strings.Split(decodedSPT, ".")
 	if len(parts) != 2 {
-		return "", response.ErrInvalidToken
+		return "", ErrInvalidToken
 	}
 
 	spt, signature := parts[0], parts[1]
 	hasValidSignature := security.VerifySignature(spt, signature, s.cfg.SPTSecret)
 	if !hasValidSignature {
-		return "", response.ErrInvalidToken
+		return "", ErrInvalidToken
 	}
 
 	data, err := s.cache.Get(ctx, cache.GenerateKey(string(keyPrefix), spt))
 	if err != nil {
-		if errors.Is(err, response.ErrCacheNotFound) {
-			return "", response.ErrInvalidToken
+		if errors.Is(err, cache.ErrCacheNotFound) {
+			return "", ErrInvalidToken
 		}
 		return "", err
 	}

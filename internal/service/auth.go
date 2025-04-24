@@ -2,15 +2,16 @@ package service
 
 import (
 	"context"
-	"strings"
+	"errors"
 
 	"github.com/memsbdm/restaurant-api/config"
 	"github.com/memsbdm/restaurant-api/internal/cache"
 	"github.com/memsbdm/restaurant-api/internal/dto"
-	"github.com/memsbdm/restaurant-api/internal/response"
 	"github.com/memsbdm/restaurant-api/pkg/keys"
 	"github.com/memsbdm/restaurant-api/pkg/security"
 )
+
+var ErrInvalidCredentials = errors.New("invalid credentials")
 
 type AuthService interface {
 	Register(ctx context.Context, user *dto.CreateUserDto) (dto.UserDTO, string, error)
@@ -55,12 +56,12 @@ func (s *authService) Register(ctx context.Context, user *dto.CreateUserDto) (dt
 func (s *authService) Login(ctx context.Context, email, password string) (dto.UserDTO, string, error) {
 	fetchedUser, err := s.userService.GetByEmail(ctx, email)
 	if err != nil {
-		return dto.UserDTO{}, "", response.ErrInvalidCredentials
+		return dto.UserDTO{}, "", ErrInvalidCredentials
 	}
 
 	err = security.ComparePassword(fetchedUser.Password, password)
 	if err != nil {
-		return dto.UserDTO{}, "", response.ErrInvalidCredentials
+		return dto.UserDTO{}, "", ErrInvalidCredentials
 	}
 
 	oat, err := s.tokenService.GenerateOAT(ctx, keys.AuthToken, fetchedUser.ID.String(), keys.AuthTokenDuration)
@@ -72,10 +73,5 @@ func (s *authService) Login(ctx context.Context, email, password string) (dto.Us
 }
 
 func (s *authService) Logout(ctx context.Context, oat string) error {
-	parts := strings.Split(oat, ".")
-	if len(parts) != 2 {
-		return response.ErrUnauthorized
-	}
-
-	return s.cache.Delete(ctx, cache.GenerateKey(string(keys.AuthToken), parts[0]))
+	return s.cache.Delete(ctx, cache.GenerateKey(string(keys.AuthToken), oat))
 }
