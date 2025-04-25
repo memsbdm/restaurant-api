@@ -14,8 +14,8 @@ import (
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
 type AuthService interface {
-	Register(ctx context.Context, user *dto.CreateUserDto) (dto.UserDTO, string, error)
-	Login(ctx context.Context, email, password string) (dto.UserDTO, string, error)
+	Register(ctx context.Context, user *dto.CreateUser) (dto.User, string, error)
+	Login(ctx context.Context, email, password string) (dto.User, string, error)
 	Logout(ctx context.Context, oat string) error
 }
 
@@ -35,38 +35,38 @@ func NewAuthService(cfg *config.Security, cache cache.Cache, userService UserSer
 	}
 }
 
-func (s *authService) Register(ctx context.Context, user *dto.CreateUserDto) (dto.UserDTO, string, error) {
+func (s *authService) Register(ctx context.Context, user *dto.CreateUser) (dto.User, string, error) {
 	createdUser, err := s.userService.Create(ctx, user)
 	if err != nil {
-		return dto.UserDTO{}, "", err
+		return dto.User{}, "", err
 	}
 
 	if err := s.userService.SendVerificationEmail(ctx, createdUser); err != nil {
-		return dto.UserDTO{}, "", err
+		return dto.User{}, "", err
 	}
 
 	oat, err := s.tokenService.GenerateOAT(ctx, keys.AuthToken, createdUser.ID.String(), keys.AuthTokenDuration)
 	if err != nil {
-		return dto.UserDTO{}, "", err
+		return dto.User{}, "", err
 	}
 
 	return createdUser, oat, nil
 }
 
-func (s *authService) Login(ctx context.Context, email, password string) (dto.UserDTO, string, error) {
+func (s *authService) Login(ctx context.Context, email, password string) (dto.User, string, error) {
 	fetchedUser, err := s.userService.GetByEmail(ctx, email)
 	if err != nil {
-		return dto.UserDTO{}, "", ErrInvalidCredentials
+		return dto.User{}, "", ErrInvalidCredentials
 	}
 
 	err = security.ComparePassword(fetchedUser.Password, password)
 	if err != nil {
-		return dto.UserDTO{}, "", ErrInvalidCredentials
+		return dto.User{}, "", ErrInvalidCredentials
 	}
 
 	oat, err := s.tokenService.GenerateOAT(ctx, keys.AuthToken, fetchedUser.ID.String(), keys.AuthTokenDuration)
 	if err != nil {
-		return dto.UserDTO{}, "", err
+		return dto.User{}, "", err
 	}
 
 	return fetchedUser, oat, nil

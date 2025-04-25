@@ -7,28 +7,28 @@ import (
 	"github.com/memsbdm/restaurant-api/internal/database/repository"
 )
 
-type RestaurantDTO struct {
-	ID          uuid.UUID             `json:"id"`
-	CreatedAt   time.Time             `json:"created_at"`
-	UpdatedAt   time.Time             `json:"updated_at"`
-	Name        string                `json:"name"`
-	Alias       string                `json:"alias"`
-	Description *string               `json:"description"`
-	Address     string                `json:"address"`
-	Lat         *float64              `json:"lat"`
-	Lng         *float64              `json:"lng"`
-	Phone       *string               `json:"phone"`
-	ImageURL    *string               `json:"image_url"`
-	IsVerified  bool                  `json:"is_verified"`
-	PlaceID     string                `json:"place_id"`
-	Menus       []MenuDTO             `json:"menus,omitempty"`
-	Categories  []CategoryDTO         `json:"categories,omitempty"`
-	Articles    []ArticleDTO          `json:"articles,omitempty"`
-	Invites     []RestaurantInviteDTO `json:"invites,omitempty"`
+type Restaurant struct {
+	ID          uuid.UUID          `json:"id"`
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
+	Name        string             `json:"name"`
+	Alias       string             `json:"alias"`
+	Description *string            `json:"description"`
+	Address     string             `json:"address"`
+	Lat         *float64           `json:"lat"`
+	Lng         *float64           `json:"lng"`
+	Phone       *string            `json:"phone"`
+	ImageURL    *string            `json:"image_url"`
+	IsVerified  bool               `json:"is_verified"`
+	PlaceID     string             `json:"place_id"`
+	Menus       []Menu             `json:"menus,omitempty"`
+	Categories  []Category         `json:"categories,omitempty"`
+	Articles    []Article          `json:"articles,omitempty"`
+	Invites     []RestaurantInvite `json:"invites,omitempty"`
 }
 
-func NewRestaurantDTO(restaurant repository.Restaurant) RestaurantDTO {
-	return RestaurantDTO{
+func NewRestaurant(restaurant repository.Restaurant) Restaurant {
+	return Restaurant{
 		ID:          restaurant.ID,
 		CreatedAt:   restaurant.CreatedAt,
 		UpdatedAt:   restaurant.UpdatedAt,
@@ -43,7 +43,7 @@ func NewRestaurantDTO(restaurant repository.Restaurant) RestaurantDTO {
 	}
 }
 
-type CreateRestaurantDTO struct {
+type CreateRestaurant struct {
 	Name    string
 	Alias   string
 	Address string
@@ -53,7 +53,7 @@ type CreateRestaurantDTO struct {
 	PlaceID string
 }
 
-func (r CreateRestaurantDTO) ToParams() repository.CreateRestaurantParams {
+func (r CreateRestaurant) ToParams() repository.CreateRestaurantParams {
 	return repository.CreateRestaurantParams{
 		Name:    r.Name,
 		Alias:   r.Alias,

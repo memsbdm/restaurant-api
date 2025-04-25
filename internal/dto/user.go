@@ -7,7 +7,7 @@ import (
 	"github.com/memsbdm/restaurant-api/internal/database/repository"
 )
 
-type UserDTO struct {
+type User struct {
 	ID              uuid.UUID `json:"id"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
@@ -18,7 +18,7 @@ type UserDTO struct {
 	AvatarURL       *string   `json:"avatar_url"`
 }
 
-func (u *UserDTO) ToUpdateParams() repository.UpdateUserParams {
+func (u *User) ToUpdateParams() repository.UpdateUserParams {
 	return repository.UpdateUserParams{
 		ID:              u.ID,
 		Email:           u.Email,
@@ -27,8 +27,8 @@ func (u *UserDTO) ToUpdateParams() repository.UpdateUserParams {
 	}
 }
 
-func NewUserDTO(user repository.User) UserDTO {
-	return UserDTO{
+func NewUser(user repository.User) User {
+	return User{
 		ID:              user.ID,
 		CreatedAt:       user.CreatedAt,
 		UpdatedAt:       user.UpdatedAt,
@@ -40,13 +40,13 @@ func NewUserDTO(user repository.User) UserDTO {
 	}
 }
 
-type CreateUserDto struct {
+type CreateUser struct {
 	Name     string
 	Email    string
 	Password string
 }
 
-func (u CreateUserDto) ToParams() repository.CreateUserParams {
+func (u CreateUser) ToParams() repository.CreateUserParams {
 	return repository.CreateUserParams{
 		Name:     u.Name,
 		Email:    u.Email,

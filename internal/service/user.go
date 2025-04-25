@@ -19,12 +19,12 @@ var (
 )
 
 type UserService interface {
-	GetByID(ctx context.Context, id uuid.UUID) (dto.UserDTO, error)
-	GetByEmail(ctx context.Context, email string) (dto.UserDTO, error)
-	Create(ctx context.Context, user *dto.CreateUserDto) (dto.UserDTO, error)
-	Update(ctx context.Context, user *dto.UserDTO) (dto.UserDTO, error)
-	SendVerificationEmail(ctx context.Context, user dto.UserDTO) error
-	VerifyEmail(ctx context.Context, token string) (dto.UserDTO, error)
+	GetByID(ctx context.Context, id uuid.UUID) (dto.User, error)
+	GetByEmail(ctx context.Context, email string) (dto.User, error)
+	Create(ctx context.Context, user *dto.CreateUser) (dto.User, error)
+	Update(ctx context.Context, user *dto.User) (dto.User, error)
+	SendVerificationEmail(ctx context.Context, user dto.User) error
+	VerifyEmail(ctx context.Context, token string) (dto.User, error)
 	ResendVerificationEmail(ctx context.Context, userID uuid.UUID) error
 }
 
@@ -44,59 +44,59 @@ func NewUserService(cfg *config.App, db *database.DB, tokenSvc TokenService, mai
 	}
 }
 
-func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (dto.UserDTO, error) {
+func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (dto.User, error) {
 	dbUser, err := s.db.Queries.GetUserById(ctx, id)
 	if err != nil {
-		return dto.UserDTO{}, err
+		return dto.User{}, err
 	}
 
-	return dto.NewUserDTO(dbUser), nil
+	return dto.NewUser(dbUser), nil
 }
 
-func (s *userService) GetByEmail(ctx context.Context, email string) (dto.UserDTO, error) {
+func (s *userService) GetByEmail(ctx context.Context, email string) (dto.User, error) {
 	dbUser, err := s.db.Queries.GetUserByEmail(ctx, email)
 	if err != nil {
-		return dto.UserDTO{}, err
+		return dto.User{}, err
 	}
 
-	return dto.NewUserDTO(dbUser), nil
+	return dto.NewUser(dbUser), nil
 }
 
-func (s *userService) Create(ctx context.Context, user *dto.CreateUserDto) (dto.UserDTO, error) {
+func (s *userService) Create(ctx context.Context, user *dto.CreateUser) (dto.User, error) {
 	emailTaken, err := s.db.Queries.UserEmailTaken(ctx, user.Email)
 	if err != nil {
-		return dto.UserDTO{}, err
+		return dto.User{}, err
 	}
 
 	if emailTaken {
-		return dto.UserDTO{}, ErrEmailConflict
+		return dto.User{}, ErrEmailConflict
 	}
 
 	hashedPassword, err := security.HashPassword(user.Password)
 	if err != nil {
-		return dto.UserDTO{}, err
+		return dto.User{}, err
 	}
 
 	user.Password = hashedPassword
 
 	dbUser, err := s.db.Queries.CreateUser(ctx, user.ToParams())
 	if err != nil {
-		return dto.UserDTO{}, err
+		return dto.User{}, err
 	}
 
-	return dto.NewUserDTO(dbUser), nil
+	return dto.NewUser(dbUser), nil
 }
 
-func (s *userService) Update(ctx context.Context, user *dto.UserDTO) (dto.UserDTO, error) {
+func (s *userService) Update(ctx context.Context, user *dto.User) (dto.User, error) {
 	dbUser, err := s.db.Queries.UpdateUser(ctx, user.ToUpdateParams())
 	if err != nil {
-		return dto.UserDTO{}, err
+		return dto.User{}, err
 	}
 
-	return dto.NewUserDTO(dbUser), nil
+	return dto.NewUser(dbUser), nil
 }
 
-func (s *userService) SendVerificationEmail(ctx context.Context, user dto.UserDTO) error {
+func (s *userService) SendVerificationEmail(ctx context.Context, user dto.User) error {
 	spt, err := s.tokenSvc.GenerateSPT(ctx, keys.EmailVerification, user.ID.String(), keys.EmailVerificationTokenDuration)
 	if err != nil {
 		return err
@@ -118,31 +118,31 @@ func (s *userService) SendVerificationEmail(ctx context.Context, user dto.UserDT
 	})
 }
 
-func (s *userService) VerifyEmail(ctx context.Context, token string) (dto.UserDTO, error) {
+func (s *userService) VerifyEmail(ctx context.Context, token string) (dto.User, error) {
 	decodedToken, err := s.tokenSvc.VerifySPT(ctx, keys.EmailVerification, token)
 	if err != nil {
-		return dto.UserDTO{}, err
+		return dto.User{}, err
 	}
 
 	userID := decodedToken
 	dbUser, err := s.db.Queries.GetUserById(ctx, uuid.MustParse(userID))
 	if err != nil {
-		return dto.UserDTO{}, err
+		return dto.User{}, err
 	}
 
 	dbUser.IsEmailVerified = true
-	dbUserDto := dto.NewUserDTO(dbUser)
-	updatedUser, err := s.db.Queries.UpdateUser(ctx, dbUserDto.ToUpdateParams())
+	dbUserDTO := dto.NewUser(dbUser)
+	updatedUser, err := s.db.Queries.UpdateUser(ctx, dbUserDTO.ToUpdateParams())
 	if err != nil {
-		return dto.UserDTO{}, err
+		return dto.User{}, err
 	}
 
 	err = s.tokenSvc.RevokeSPT(ctx, keys.EmailVerification, userID)
 	if err != nil {
-		return dto.UserDTO{}, err
+		return dto.User{}, err
 	}
 
-	return dto.NewUserDTO(updatedUser), nil
+	return dto.NewUser(updatedUser), nil
 }
 
 func (s *userService) ResendVerificationEmail(ctx context.Context, userID uuid.UUID) error {
@@ -155,5 +155,5 @@ func (s *userService) ResendVerificationEmail(ctx context.Context, userID uuid.U
 		return ErrEmailAlreadyVerified
 	}
 
-	return s.SendVerificationEmail(ctx, dto.NewUserDTO(dbUser))
+	return s.SendVerificationEmail(ctx, dto.NewUser(dbUser))
 }

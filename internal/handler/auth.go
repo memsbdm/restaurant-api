@@ -38,7 +38,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createdUser, oat, err := h.authSvc.Register(r.Context(), &dto.CreateUserDto{
+	createdUser, oat, err := h.authSvc.Register(r.Context(), &dto.CreateUser{
 		Name:     strings.TrimSpace(request.Name),
 		Email:    strings.TrimSpace(request.Email),
 		Password: request.Password,

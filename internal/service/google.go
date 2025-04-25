@@ -21,8 +21,8 @@ var (
 )
 
 type GoogleService interface {
-	Autocomplete(ctx context.Context, query string) ([]dto.GooglePredictionDTO, error)
-	GetDetails(ctx context.Context, placeID string) (*dto.CreateRestaurantDTO, error)
+	Autocomplete(ctx context.Context, query string) ([]dto.GooglePrediction, error)
+	GetDetails(ctx context.Context, placeID string) (*dto.CreateRestaurant, error)
 }
 
 type googleService struct {
@@ -35,7 +35,7 @@ func NewGoogleService(cfg *config.Google) *googleService {
 	}
 }
 
-func (s *googleService) Autocomplete(ctx context.Context, query string) ([]dto.GooglePredictionDTO, error) {
+func (s *googleService) Autocomplete(ctx context.Context, query string) ([]dto.GooglePrediction, error) {
 	if len(query) < 3 {
 		return nil, ErrGoogleAutocompleteQueryLength
 	}
@@ -72,22 +72,22 @@ func (s *googleService) Autocomplete(ctx context.Context, query string) ([]dto.G
 		return nil, err
 	}
 
-	var suggestions []dto.GooglePredictionDTO
+	var suggestions []dto.GooglePrediction
 	for _, prediction := range result.Predictions {
-		suggestions = append(suggestions, dto.GooglePredictionDTO{
+		suggestions = append(suggestions, dto.GooglePrediction{
 			PlaceID:     prediction.PlaceID,
 			Description: prediction.Description,
 		})
 	}
 
 	if len(suggestions) == 0 {
-		return []dto.GooglePredictionDTO{}, nil
+		return []dto.GooglePrediction{}, nil
 	}
 
 	return suggestions, nil
 }
 
-func (s *googleService) GetDetails(ctx context.Context, placeID string) (*dto.CreateRestaurantDTO, error) {
+func (s *googleService) GetDetails(ctx context.Context, placeID string) (*dto.CreateRestaurant, error) {
 	const apiURL = "https://places.googleapis.com/v1/places/"
 	params := url.Values{}
 	params.Set("fields", "displayName,formattedAddress,location,internationalPhoneNumber")
@@ -127,7 +127,7 @@ func (s *googleService) GetDetails(ctx context.Context, placeID string) (*dto.Cr
 		return nil, err
 	}
 
-	restaurant := &dto.CreateRestaurantDTO{
+	restaurant := &dto.CreateRestaurant{
 		Name:    result.DisplayName.Text,
 		Alias:   result.DisplayName.Text,
 		Address: result.FormattedAddress,
