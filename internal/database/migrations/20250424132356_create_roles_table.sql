@@ -4,6 +4,9 @@ CREATE TABLE roles (
     id SMALLSERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL
 );
+
+INSERT INTO roles (name)
+VALUES ('ADMIN'),('USER');
 -- +goose StatementEnd
 
 -- +goose Down

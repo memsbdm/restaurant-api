@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/memsbdm/restaurant-api/internal/database/codegen"
+	"github.com/memsbdm/restaurant-api/internal/database/repository"
 )
 
 type UserDTO struct {
@@ -18,8 +18,8 @@ type UserDTO struct {
 	AvatarURL       *string   `json:"avatar_url"`
 }
 
-func (u *UserDTO) ToUpdateParams() codegen.UpdateUserParams {
-	return codegen.UpdateUserParams{
+func (u *UserDTO) ToUpdateParams() repository.UpdateUserParams {
+	return repository.UpdateUserParams{
 		ID:              u.ID,
 		Email:           u.Email,
 		IsEmailVerified: u.IsEmailVerified,
@@ -27,7 +27,7 @@ func (u *UserDTO) ToUpdateParams() codegen.UpdateUserParams {
 	}
 }
 
-func NewUserDTO(user codegen.User) UserDTO {
+func NewUserDTO(user repository.User) UserDTO {
 	return UserDTO{
 		ID:              user.ID,
 		CreatedAt:       user.CreatedAt,
@@ -46,8 +46,8 @@ type CreateUserDto struct {
 	Password string
 }
 
-func (u CreateUserDto) ToParams() codegen.CreateUserParams {
-	return codegen.CreateUserParams{
+func (u CreateUserDto) ToParams() repository.CreateUserParams {
+	return repository.CreateUserParams{
 		Name:     u.Name,
 		Email:    u.Email,
 		Password: u.Password,

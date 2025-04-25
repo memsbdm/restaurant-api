@@ -25,8 +25,9 @@ var ErrToHttpStatusCode = map[error]int{
 	ErrServiceUnavailable: http.StatusServiceUnavailable,
 
 	// Conflict
-	service.ErrEmailConflict:        http.StatusConflict,
-	service.ErrEmailAlreadyVerified: http.StatusForbidden,
+	service.ErrEmailConflict:          http.StatusConflict,
+	service.ErrEmailAlreadyVerified:   http.StatusForbidden,
+	service.ErrRestaurantAlreadyTaken: http.StatusConflict,
 
 	// Token
 	service.ErrInvalidToken: http.StatusBadRequest,
@@ -40,4 +41,5 @@ var ErrToHttpStatusCode = map[error]int{
 	// Google
 	service.ErrGoogleServiceUnavailable:      http.StatusServiceUnavailable,
 	service.ErrGoogleAutocompleteQueryLength: http.StatusBadRequest,
+	service.ErrGoogleInvalidPlaceID:          http.StatusBadRequest,
 }

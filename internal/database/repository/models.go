@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.29.0
 
-package codegen
+package repository
 
 import (
 	"time"
@@ -70,7 +70,7 @@ type RestaurantUser struct {
 	ID           int32
 	RestaurantID uuid.UUID
 	UserID       uuid.UUID
-	RoleID       int32
+	RoleID       int16
 }
 
 type Role struct {

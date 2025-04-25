@@ -19,6 +19,9 @@ func registerRoutes(h *handler.Handlers, m *middleware.Middleware) http.Handler 
 	r.HandleFunc("GET /users/verify-email", h.VerifyEmailHandler.VerifyEmail)
 	r.Handle("POST /users/verify-email/resend", m.Auth(h.VerifyEmailHandler.ResendVerificationEmail))
 
+	// Restaurants
+	r.Handle("POST /restaurants", m.Auth(h.RestaurantHandler.Create))
+
 	// Google
 	r.Handle("GET /google/autocomplete", m.Auth(h.GoogleHandler.Autocomplete))
 

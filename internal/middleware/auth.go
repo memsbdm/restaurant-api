@@ -26,7 +26,6 @@ func AuthMiddleware(tokenSvc service.TokenService) Middle {
 				response.HandleError(w, response.ErrUnauthorized)
 				return
 			}
-
 			ctx := context.WithValue(r.Context(), keys.UserIDContextKey, userID)
 			decodedOAT, _ := security.DecodeTokenURLSafe(oat)
 			oat = strings.Split(decodedOAT, ".")[0]

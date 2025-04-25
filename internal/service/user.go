@@ -6,9 +6,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/memsbdm/restaurant-api/config"
+	"github.com/memsbdm/restaurant-api/internal/database"
 	"github.com/memsbdm/restaurant-api/internal/dto"
 	"github.com/memsbdm/restaurant-api/internal/mailer"
-	"github.com/memsbdm/restaurant-api/internal/repository"
 	"github.com/memsbdm/restaurant-api/pkg/keys"
 	"github.com/memsbdm/restaurant-api/pkg/security"
 )
@@ -30,22 +30,22 @@ type UserService interface {
 
 type userService struct {
 	cfg       *config.App
-	userRepo  repository.UserRepository
+	db        *database.DB
 	mailerSvc MailerService
 	tokenSvc  TokenService
 }
 
-func NewUserService(cfg *config.App, userRepo repository.UserRepository, tokenSvc TokenService, mailerSvc MailerService) *userService {
+func NewUserService(cfg *config.App, db *database.DB, tokenSvc TokenService, mailerSvc MailerService) *userService {
 	return &userService{
 		cfg:       cfg,
-		userRepo:  userRepo,
+		db:        db,
 		mailerSvc: mailerSvc,
 		tokenSvc:  tokenSvc,
 	}
 }
 
 func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (dto.UserDTO, error) {
-	dbUser, err := s.userRepo.GetByID(ctx, id)
+	dbUser, err := s.db.Queries.GetUserById(ctx, id)
 	if err != nil {
 		return dto.UserDTO{}, err
 	}
@@ -54,7 +54,7 @@ func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (dto.UserDTO, e
 }
 
 func (s *userService) GetByEmail(ctx context.Context, email string) (dto.UserDTO, error) {
-	dbUser, err := s.userRepo.GetByEmail(ctx, email)
+	dbUser, err := s.db.Queries.GetUserByEmail(ctx, email)
 	if err != nil {
 		return dto.UserDTO{}, err
 	}
@@ -63,7 +63,7 @@ func (s *userService) GetByEmail(ctx context.Context, email string) (dto.UserDTO
 }
 
 func (s *userService) Create(ctx context.Context, user *dto.CreateUserDto) (dto.UserDTO, error) {
-	emailTaken, err := s.userRepo.EmailTaken(ctx, user.Email)
+	emailTaken, err := s.db.Queries.UserEmailTaken(ctx, user.Email)
 	if err != nil {
 		return dto.UserDTO{}, err
 	}
@@ -79,7 +79,7 @@ func (s *userService) Create(ctx context.Context, user *dto.CreateUserDto) (dto.
 
 	user.Password = hashedPassword
 
-	dbUser, err := s.userRepo.Create(ctx, user)
+	dbUser, err := s.db.Queries.CreateUser(ctx, user.ToParams())
 	if err != nil {
 		return dto.UserDTO{}, err
 	}
@@ -88,7 +88,7 @@ func (s *userService) Create(ctx context.Context, user *dto.CreateUserDto) (dto.
 }
 
 func (s *userService) Update(ctx context.Context, user *dto.UserDTO) (dto.UserDTO, error) {
-	dbUser, err := s.userRepo.Update(ctx, user)
+	dbUser, err := s.db.Queries.UpdateUser(ctx, user.ToUpdateParams())
 	if err != nil {
 		return dto.UserDTO{}, err
 	}
@@ -125,14 +125,14 @@ func (s *userService) VerifyEmail(ctx context.Context, token string) (dto.UserDT
 	}
 
 	userID := decodedToken
-	dbUser, err := s.userRepo.GetByID(ctx, uuid.MustParse(userID))
+	dbUser, err := s.db.Queries.GetUserById(ctx, uuid.MustParse(userID))
 	if err != nil {
 		return dto.UserDTO{}, err
 	}
 
 	dbUser.IsEmailVerified = true
 	dbUserDto := dto.NewUserDTO(dbUser)
-	updatedUser, err := s.userRepo.Update(ctx, &dbUserDto)
+	updatedUser, err := s.db.Queries.UpdateUser(ctx, dbUserDto.ToUpdateParams())
 	if err != nil {
 		return dto.UserDTO{}, err
 	}
@@ -146,7 +146,7 @@ func (s *userService) VerifyEmail(ctx context.Context, token string) (dto.UserDT
 }
 
 func (s *userService) ResendVerificationEmail(ctx context.Context, userID uuid.UUID) error {
-	dbUser, err := s.userRepo.GetByID(ctx, userID)
+	dbUser, err := s.db.Queries.GetUserById(ctx, userID)
 	if err != nil {
 		return err
 	}

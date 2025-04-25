@@ -5,8 +5,8 @@ sql:
     schema: "./internal/database/migrations"
     gen:
       go:
-        package: "codegen"
-        out: "internal/database/codegen"
+        package: "repository"
+        out: "internal/database/repository"
         sql_package: "pgx/v5"
         emit_pointers_for_null_types: true
         overrides:

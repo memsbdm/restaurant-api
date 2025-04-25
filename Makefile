@@ -33,5 +33,5 @@ run:
 	@go run cmd/http/*.go
 
 
-.PHONY:  build clean codegen migration migration-down migration-rollback migration-up run
+.PHONY:  build clean repository migration migration-down migration-rollback migration-up run
 

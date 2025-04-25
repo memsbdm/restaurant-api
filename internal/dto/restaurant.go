@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/memsbdm/restaurant-api/internal/database/codegen"
+	"github.com/memsbdm/restaurant-api/internal/database/repository"
 )
 
 type RestaurantDTO struct {
@@ -21,13 +21,13 @@ type RestaurantDTO struct {
 	ImageURL    *string               `json:"image_url"`
 	IsVerified  bool                  `json:"is_verified"`
 	PlaceID     string                `json:"place_id"`
-	Menus       []MenuDTO             `json:"menus"`
-	Categories  []CategoryDTO         `json:"categories"`
-	Articles    []ArticleDTO          `json:"articles"`
-	Invites     []RestaurantInviteDTO `json:"invites"`
+	Menus       []MenuDTO             `json:"menus,omitempty"`
+	Categories  []CategoryDTO         `json:"categories,omitempty"`
+	Articles    []ArticleDTO          `json:"articles,omitempty"`
+	Invites     []RestaurantInviteDTO `json:"invites,omitempty"`
 }
 
-func NewRestaurantDTO(restaurant codegen.Restaurant) RestaurantDTO {
+func NewRestaurantDTO(restaurant repository.Restaurant) RestaurantDTO {
 	return RestaurantDTO{
 		ID:          restaurant.ID,
 		CreatedAt:   restaurant.CreatedAt,
@@ -36,8 +36,6 @@ func NewRestaurantDTO(restaurant codegen.Restaurant) RestaurantDTO {
 		Alias:       restaurant.Alias,
 		Description: restaurant.Description,
 		Address:     restaurant.Address,
-		Lat:         restaurant.Lat,
-		Lng:         restaurant.Lng,
 		Phone:       restaurant.Phone,
 		ImageURL:    restaurant.ImageUrl,
 		IsVerified:  restaurant.IsVerified,
@@ -55,8 +53,8 @@ type CreateRestaurantDTO struct {
 	PlaceID string
 }
 
-func (r CreateRestaurantDTO) ToParams() codegen.CreateRestaurantParams {
-	return codegen.CreateRestaurantParams{
+func (r CreateRestaurantDTO) ToParams() repository.CreateRestaurantParams {
+	return repository.CreateRestaurantParams{
 		Name:    r.Name,
 		Alias:   r.Alias,
 		Address: r.Address,

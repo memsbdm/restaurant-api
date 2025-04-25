@@ -8,10 +8,12 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/memsbdm/restaurant-api/config"
+	"github.com/memsbdm/restaurant-api/internal/database/repository"
 )
 
 type DB struct {
 	*pgx.Conn
+	Queries *repository.Queries
 }
 
 func NewPostgres(cfg *config.DB) *DB {
@@ -29,8 +31,9 @@ func NewPostgres(cfg *config.DB) *DB {
 	}
 
 	log.Println("Connected to database")
+	queries := repository.New(conn)
 
-	return &DB{conn}
+	return &DB{conn, queries}
 }
 
 func (db *DB) Close() {

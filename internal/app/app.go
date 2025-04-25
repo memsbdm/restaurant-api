@@ -7,7 +7,6 @@ import (
 	"github.com/memsbdm/restaurant-api/internal/handler"
 	"github.com/memsbdm/restaurant-api/internal/mailer"
 	"github.com/memsbdm/restaurant-api/internal/middleware"
-	"github.com/memsbdm/restaurant-api/internal/repository"
 	"github.com/memsbdm/restaurant-api/internal/server"
 	"github.com/memsbdm/restaurant-api/internal/service"
 )
@@ -24,8 +23,7 @@ func New() *App {
 	cache := cache.NewRedis(cfg.Cache)
 	mailr := mailer.NewSES(cfg)
 
-	repos := repository.New(db)
-	services := service.New(cfg, repos, cache, mailr)
+	services := service.New(cfg, db, cache, mailr)
 	middle := middleware.New(cfg, services)
 	handlers := handler.New(cfg, services)
 
