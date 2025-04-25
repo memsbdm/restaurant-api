@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/memsbdm/restaurant-api/config"
 	"github.com/memsbdm/restaurant-api/internal/dto"
@@ -26,12 +27,16 @@ type GoogleService interface {
 }
 
 type googleService struct {
-	cfg *config.Google
+	cfg    *config.Google
+	client *http.Client
 }
 
 func NewGoogleService(cfg *config.Google) *googleService {
 	return &googleService{
 		cfg: cfg,
+		client: &http.Client{
+			Timeout: 5 * time.Second,
+		},
 	}
 }
 
@@ -46,7 +51,7 @@ func (s *googleService) Autocomplete(ctx context.Context, query string) ([]dto.G
 	params.Set("key", s.cfg.APIKey)
 	reqURL := fmt.Sprintf("%s?%s", apiURL, params.Encode())
 
-	resp, err := http.Get(reqURL)
+	resp, err := s.client.Get(reqURL)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +99,7 @@ func (s *googleService) GetDetails(ctx context.Context, placeID string) (*dto.Cr
 	params.Set("key", s.cfg.APIKey)
 	reqURL := fmt.Sprintf("%s%s?%s", apiURL, placeID, params.Encode())
 
-	resp, err := http.Get(reqURL)
+	resp, err := s.client.Get(reqURL)
 	if err != nil {
 		return nil, err
 	}
