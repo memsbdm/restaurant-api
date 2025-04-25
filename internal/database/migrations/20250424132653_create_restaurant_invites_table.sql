@@ -6,7 +6,7 @@ CREATE TABLE restaurant_invites (
   invited_by_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   canceled_by_user_id UUID NULL REFERENCES users(id) ON DELETE SET NULL,
   email VARCHAR(255) NOT NULL,
-  role_id INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+  role_id SMALLINT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
   accepted_at TIMESTAMP NULL,
   canceled_at TIMESTAMP NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),

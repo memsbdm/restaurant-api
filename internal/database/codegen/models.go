@@ -10,6 +10,74 @@ import (
 	"github.com/google/uuid"
 )
 
+type Article struct {
+	ID           int32
+	Name         string
+	Description  string
+	Price        float64
+	ArticleOrder int16
+	CategoryID   int32
+	RestaurantID uuid.UUID
+}
+
+type Category struct {
+	ID            int32
+	Name          string
+	Description   *string
+	CategoryOrder int16
+	MenuID        int32
+	RestaurantID  uuid.UUID
+}
+
+type Menu struct {
+	ID           int32
+	Name         string
+	MenuOrder    int16
+	IsActive     bool
+	RestaurantID uuid.UUID
+}
+
+type Restaurant struct {
+	ID          uuid.UUID
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Name        string
+	Alias       string
+	Description *string
+	Address     string
+	Lat         *float64
+	Lng         *float64
+	Phone       *string
+	ImageUrl    *string
+	IsVerified  bool
+	PlaceID     string
+}
+
+type RestaurantInvite struct {
+	ID               int32
+	RestaurantID     uuid.UUID
+	InvitedByUserID  uuid.UUID
+	CanceledByUserID *uuid.UUID
+	Email            string
+	RoleID           int16
+	AcceptedAt       *time.Time
+	CanceledAt       *time.Time
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
+type RestaurantUser struct {
+	ID           int32
+	RestaurantID uuid.UUID
+	UserID       uuid.UUID
+	RoleID       int32
+}
+
+type Role struct {
+	ID   int16
+	Name string
+}
+
 type User struct {
 	ID              uuid.UUID
 	CreatedAt       time.Time
