@@ -45,7 +45,7 @@ func NewSES(cfg *config.Container) *mailer {
 func (m *mailer) Send(mail *Mail) error {
 	if m.cfg.App.Env != config.EnvProduction {
 		var builder strings.Builder
-		for i := range len(mail.To) {
+		for i := range mail.To {
 			builder.WriteString(fmt.Sprintf("- %s", mail.To[i]))
 		}
 		mail.To = []string{m.cfg.Mailer.DebugTo}

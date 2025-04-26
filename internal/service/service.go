@@ -22,8 +22,8 @@ func New(cfg *config.Container, db *database.DB, cache cache.Cache, mailer maile
 	tokenSvc := NewTokenService(cfg.Security, cache)
 	mailerSvc := NewMailerService(cfg.Mailer, mailer)
 	userSvc := NewUserService(cfg.App, db, tokenSvc, mailerSvc)
-	authSvc := NewAuthService(cfg.Security, cache, userSvc, tokenSvc)
 	restaurantSvc := NewRestaurantService(db, googleSvc)
+	authSvc := NewAuthService(cfg.Security, cache, userSvc, tokenSvc, restaurantSvc)
 	restaurantUserSvc := NewRestaurantUserService(db)
 
 	return &Services{

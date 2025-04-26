@@ -39,7 +39,7 @@ func RestaurantMiddleware(appEnv string, restaurantSvc service.RestaurantService
 					restaurant, err := restaurantSvc.GetByID(ctx, restaurantID)
 					if err == nil {
 						fmt.Println("User belongs to the restaurant")
-						ctx = enrichContextWithRestaurantInfos(ctx, &restaurant, roleID)
+						ctx = enrichContextWithRestaurantInfos(ctx, restaurant, roleID)
 						sendActiveRestaurantToClient(w, r, appEnv, restaurant.ID)
 						next.ServeHTTP(w, r.WithContext(ctx))
 						return
@@ -52,7 +52,7 @@ func RestaurantMiddleware(appEnv string, restaurantSvc service.RestaurantService
 			restaurantUser, err := restaurantUserSvc.GetAnyRestaurantUserLinkByUserID(ctx, userID)
 			if err != nil {
 				if errors.Is(err, service.ErrRestaurantOrUserNotFound) {
-					response.HandleError(w, response.ErrNoRestaurantFoundForUser)
+					response.HandleError(w, service.ErrNoRestaurantFoundForUser)
 					return
 				}
 				response.HandleError(w, err)
@@ -66,7 +66,7 @@ func RestaurantMiddleware(appEnv string, restaurantSvc service.RestaurantService
 				return
 			}
 
-			ctx = enrichContextWithRestaurantInfos(ctx, &restaurant, restaurantUser.RoleID)
+			ctx = enrichContextWithRestaurantInfos(ctx, restaurant, restaurantUser.RoleID)
 			sendActiveRestaurantToClient(w, r, appEnv, restaurant.ID)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
@@ -115,7 +115,7 @@ func getActiveRestaurantIDFromHeader(r *http.Request) (uuid.UUID, error) {
 	return restaurantID, nil
 }
 
-func enrichContextWithRestaurantInfos(ctx context.Context, restaurant *dto.Restaurant, userRoleID int16) context.Context {
+func enrichContextWithRestaurantInfos(ctx context.Context, restaurant *dto.Restaurant, userRoleID int) context.Context {
 	ctx = context.WithValue(ctx, keys.RestaurantIDContextKey, restaurant.ID)
 	ctx = context.WithValue(ctx, keys.RestaurantContextKey, restaurant)
 	ctx = context.WithValue(ctx, keys.UserRoleIDContextKey, userRoleID)

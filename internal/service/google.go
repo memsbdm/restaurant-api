@@ -22,7 +22,7 @@ var (
 )
 
 type GoogleService interface {
-	Autocomplete(ctx context.Context, query string) ([]dto.GooglePrediction, error)
+	Autocomplete(ctx context.Context, query string) ([]*dto.GooglePrediction, error)
 	GetDetails(ctx context.Context, placeID string) (*dto.CreateRestaurant, error)
 }
 
@@ -40,7 +40,7 @@ func NewGoogleService(cfg *config.Google) *googleService {
 	}
 }
 
-func (s *googleService) Autocomplete(ctx context.Context, query string) ([]dto.GooglePrediction, error) {
+func (s *googleService) Autocomplete(ctx context.Context, query string) ([]*dto.GooglePrediction, error) {
 	if len(query) < 3 {
 		return nil, ErrGoogleAutocompleteQueryLength
 	}
@@ -77,19 +77,19 @@ func (s *googleService) Autocomplete(ctx context.Context, query string) ([]dto.G
 		return nil, err
 	}
 
-	var suggestions []dto.GooglePrediction
-	for _, prediction := range result.Predictions {
-		suggestions = append(suggestions, dto.GooglePrediction{
-			PlaceID:     prediction.PlaceID,
-			Description: prediction.Description,
-		})
+	predictions := make([]*dto.GooglePrediction, len(result.Predictions))
+	for i := range result.Predictions {
+		predictions[i] = &dto.GooglePrediction{
+			PlaceID:     result.Predictions[i].PlaceID,
+			Description: result.Predictions[i].Description,
+		}
 	}
 
-	if len(suggestions) == 0 {
-		return []dto.GooglePrediction{}, nil
+	if len(predictions) == 0 {
+		return []*dto.GooglePrediction{}, nil
 	}
 
-	return suggestions, nil
+	return predictions, nil
 }
 
 func (s *googleService) GetDetails(ctx context.Context, placeID string) (*dto.CreateRestaurant, error) {

@@ -18,8 +18,8 @@ type User struct {
 	AvatarURL       *string   `json:"avatar_url"`
 }
 
-func NewUser(user *repository.User) User {
-	return User{
+func NewUser(user *repository.User) *User {
+	return &User{
 		ID:              user.ID,
 		CreatedAt:       user.CreatedAt,
 		UpdatedAt:       user.UpdatedAt,

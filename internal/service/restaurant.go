@@ -13,14 +13,15 @@ import (
 )
 
 var (
-	ErrRestaurantAlreadyTaken = errors.New("restaurant already taken")
-	ErrRestaurantNotFound     = errors.New("restaurant not found")
+	ErrRestaurantAlreadyTaken   = errors.New("restaurant already taken")
+	ErrRestaurantNotFound       = errors.New("restaurant not found")
+	ErrNoRestaurantFoundForUser = errors.New("no restaurant found for user")
 )
 
 type RestaurantService interface {
-	Create(ctx context.Context, placeID string, userID uuid.UUID) (dto.Restaurant, error)
-	GetByID(ctx context.Context, id uuid.UUID) (dto.Restaurant, error)
-	GetRestaurantsByUserID(ctx context.Context, userID uuid.UUID) ([]dto.Restaurant, error)
+	Create(ctx context.Context, placeID string, userID uuid.UUID) (*dto.Restaurant, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*dto.Restaurant, error)
+	GetRestaurantsByUserID(ctx context.Context, userID uuid.UUID) ([]*dto.Restaurant, error)
 }
 
 type restaurantService struct {
@@ -35,19 +36,8 @@ func NewRestaurantService(db *database.DB, googleSvc GoogleService) RestaurantSe
 	}
 }
 
-func (s *restaurantService) GetByID(ctx context.Context, id uuid.UUID) (dto.Restaurant, error) {
-	restaurant, err := s.db.Queries.GetRestaurantByID(ctx, id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return dto.Restaurant{}, ErrRestaurantNotFound
-		}
-		return dto.Restaurant{}, err
-	}
-	return dto.NewRestaurant(&restaurant), nil
-}
-
-func (s *restaurantService) GetRestaurantsByUserID(ctx context.Context, userID uuid.UUID) ([]dto.Restaurant, error) {
-	restaurants, err := s.db.Queries.GetRestaurantsByUserID(ctx, userID)
+func (s *restaurantService) GetByID(ctx context.Context, id uuid.UUID) (*dto.Restaurant, error) {
+	dbRestaurant, err := s.db.Queries.GetRestaurantByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrRestaurantNotFound
@@ -55,22 +45,34 @@ func (s *restaurantService) GetRestaurantsByUserID(ctx context.Context, userID u
 		return nil, err
 	}
 
-	result := make([]dto.Restaurant, len(restaurants))
-	for _, restaurant := range restaurants {
-		result = append(result, dto.NewRestaurant(&restaurant))
-	}
-	return result, nil
+	return dto.NewRestaurant(&dbRestaurant), nil
 }
 
-func (s *restaurantService) Create(ctx context.Context, placeID string, userID uuid.UUID) (dto.Restaurant, error) {
+func (s *restaurantService) GetRestaurantsByUserID(ctx context.Context, userID uuid.UUID) ([]*dto.Restaurant, error) {
+	dbRestaurants, err := s.db.Queries.GetRestaurantsByUserID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []*dto.Restaurant{}, ErrNoRestaurantFoundForUser
+		}
+		return nil, err
+	}
+
+	restaurants := make([]*dto.Restaurant, len(dbRestaurants))
+	for i := range dbRestaurants {
+		restaurants[i] = dto.NewRestaurant(&dbRestaurants[i])
+	}
+	return restaurants, nil
+}
+
+func (s *restaurantService) Create(ctx context.Context, placeID string, userID uuid.UUID) (*dto.Restaurant, error) {
 	createRestaurantDTO, err := s.googleSvc.GetDetails(ctx, placeID)
 	if err != nil {
-		return dto.Restaurant{}, err
+		return nil, err
 	}
 
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
-		return dto.Restaurant{}, err
+		return nil, err
 	}
 	defer tx.Rollback(ctx)
 
@@ -81,15 +83,15 @@ func (s *restaurantService) Create(ctx context.Context, placeID string, userID u
 		UserID:  userID,
 	})
 	if err != nil {
-		return dto.Restaurant{}, err
+		return nil, err
 	}
 	if taken {
-		return dto.Restaurant{}, ErrRestaurantAlreadyTaken
+		return nil, ErrRestaurantAlreadyTaken
 	}
 
 	restaurant, err := qtx.CreateRestaurant(ctx, createRestaurantDTO.ToParams())
 	if err != nil {
-		return dto.Restaurant{}, err
+		return nil, err
 	}
 
 	err = qtx.AddRestaurantUser(ctx, repository.AddRestaurantUserParams{
@@ -98,11 +100,11 @@ func (s *restaurantService) Create(ctx context.Context, placeID string, userID u
 		RoleID:       int16(enum.RoleOwner),
 	})
 	if err != nil {
-		return dto.Restaurant{}, err
+		return nil, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return dto.Restaurant{}, err
+		return nil, err
 	}
 
 	return dto.NewRestaurant(&restaurant), nil

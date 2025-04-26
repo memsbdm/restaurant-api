@@ -27,9 +27,6 @@ var ErrToHttpStatusCode = map[error]int{
 	ErrInternal:           http.StatusInternalServerError,
 	ErrServiceUnavailable: http.StatusServiceUnavailable,
 
-	// Middleware
-	ErrNoRestaurantFoundForUser: http.StatusForbidden,
-
 	// Conflict
 	service.ErrEmailConflict:          http.StatusConflict,
 	service.ErrEmailAlreadyVerified:   http.StatusForbidden,
@@ -40,6 +37,9 @@ var ErrToHttpStatusCode = map[error]int{
 
 	// Auth
 	service.ErrInvalidCredentials: http.StatusUnauthorized,
+
+	// Restaurant
+	service.ErrNoRestaurantFoundForUser: http.StatusForbidden,
 
 	// Mailer
 	service.ErrMailerUnavailable: http.StatusServiceUnavailable,

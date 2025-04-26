@@ -14,40 +14,42 @@ import (
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
 type AuthService interface {
-	Register(ctx context.Context, user *dto.CreateUser) (dto.User, string, error)
+	Register(ctx context.Context, user *dto.CreateUser) (*dto.User, string, error)
 	Login(ctx context.Context, email, password string) (*dto.LoginResponse, string, error)
 	Logout(ctx context.Context, oat string) error
 }
 
 type authService struct {
-	cfg          *config.Security
-	cache        cache.Cache
-	tokenService TokenService
-	userService  UserService
+	cfg               *config.Security
+	cache             cache.Cache
+	restaurantService RestaurantService
+	tokenService      TokenService
+	userService       UserService
 }
 
-func NewAuthService(cfg *config.Security, cache cache.Cache, userService UserService, tokenService TokenService) *authService {
+func NewAuthService(cfg *config.Security, cache cache.Cache, userService UserService, tokenService TokenService, restaurantService RestaurantService) *authService {
 	return &authService{
-		cfg:          cfg,
-		cache:        cache,
-		tokenService: tokenService,
-		userService:  userService,
+		cfg:               cfg,
+		cache:             cache,
+		restaurantService: restaurantService,
+		tokenService:      tokenService,
+		userService:       userService,
 	}
 }
 
-func (s *authService) Register(ctx context.Context, user *dto.CreateUser) (dto.User, string, error) {
+func (s *authService) Register(ctx context.Context, user *dto.CreateUser) (*dto.User, string, error) {
 	createdUser, err := s.userService.Create(ctx, user)
 	if err != nil {
-		return dto.User{}, "", err
+		return nil, "", err
 	}
 
 	if err := s.userService.SendVerificationEmail(ctx, createdUser); err != nil {
-		return dto.User{}, "", err
+		return nil, "", err
 	}
 
 	oat, err := s.tokenService.GenerateOAT(ctx, keys.AuthToken, createdUser.ID.String(), keys.AuthTokenDuration)
 	if err != nil {
-		return dto.User{}, "", err
+		return nil, "", err
 	}
 
 	return createdUser, oat, nil
@@ -69,9 +71,11 @@ func (s *authService) Login(ctx context.Context, email, password string) (*dto.L
 		return nil, "", err
 	}
 
-	restaurants, err := s.userService.GetRestaurantsByUserID(ctx, fetchedUser.ID)
+	restaurants, err := s.restaurantService.GetRestaurantsByUserID(ctx, fetchedUser.ID)
 	if err != nil {
-		return nil, "", err
+		if !errors.Is(err, ErrNoRestaurantFoundForUser) {
+			return nil, "", err
+		}
 	}
 
 	loginResponse := &dto.LoginResponse{
