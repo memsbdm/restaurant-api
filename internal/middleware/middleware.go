@@ -18,7 +18,7 @@ type MiddlewareFunc func(handler func(http.ResponseWriter, *http.Request)) http.
 
 func New(cfg *config.Container, s *service.Services) *Middleware {
 	return &Middleware{
-		Auth:       newHandlerMiddleware(AuthMiddleware(s.TokenService)),
+		Auth:       newHandlerMiddleware(AuthMiddleware(cfg.App.Env, s.TokenService, s.AuthService)),
 		Guest:      newHandlerMiddleware(GuestMiddleware(s.TokenService)),
 		Logging:    LoggingMiddleware,
 		Restaurant: newHandlerMiddleware(RestaurantMiddleware(cfg.App.Env, s.RestaurantService, s.RestaurantUserService)),

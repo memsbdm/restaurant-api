@@ -15,12 +15,12 @@ func SetActiveRestaurantCookie(w http.ResponseWriter, restaurantID uuid.UUID, ap
 		HttpOnly: true,
 		Secure:   appEnv == config.EnvProduction,
 		SameSite: http.SameSiteStrictMode,
-		MaxAge:   60 * 60 * 24 * 7,
+		MaxAge:   60 * 60 * 24, // 1 day
 	}
 	http.SetCookie(w, cookie)
 }
 
-func setAuthCookie(w http.ResponseWriter, oat, appEnv string) {
+func SetAuthCookie(w http.ResponseWriter, oat, appEnv string) {
 	cookie := &http.Cookie{
 		Name:     "go-session",
 		Value:    oat,
@@ -28,7 +28,7 @@ func setAuthCookie(w http.ResponseWriter, oat, appEnv string) {
 		HttpOnly: true,
 		Secure:   appEnv == config.EnvProduction,
 		SameSite: http.SameSiteStrictMode,
-		MaxAge:   60 * 60 * 24 * 7,
+		MaxAge:   60 * 60, // 1 hour
 	}
 
 	http.SetCookie(w, cookie)

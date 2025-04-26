@@ -14,6 +14,6 @@ const (
 )
 
 var (
-	AuthTokenDuration              = 7 * 24 * time.Hour
+	AuthTokenDuration              = time.Hour
 	EmailVerificationTokenDuration = 24 * time.Hour
 )

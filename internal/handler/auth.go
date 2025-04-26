@@ -56,7 +56,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	setAuthCookie(w, oat, h.cfg.Env)
+	SetAuthCookie(w, oat, h.cfg.Env)
 	response.HandleSuccess(w, http.StatusCreated, createdUser)
 }
 
@@ -88,7 +88,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	setAuthCookie(w, oat, h.cfg.Env)
+	SetAuthCookie(w, oat, h.cfg.Env)
 	response.HandleSuccess(w, http.StatusCreated, loginResponse)
 }
 

@@ -23,7 +23,7 @@ func registerRoutes(h *handler.Handlers, m *middleware.Middleware) http.Handler 
 	r.Handle("POST /restaurants", m.Auth(h.RestaurantHandler.Create))
 
 	// Google
-	r.Handle("GET /google/autocomplete", middleware.Chain(h.GoogleHandler.Autocomplete, m.Restaurant, m.Auth))
+	r.Handle("GET /google/autocomplete", middleware.Chain(h.GoogleHandler.Autocomplete, m.Auth))
 
 	// Sub-routes
 	apiV1 := http.NewServeMux()

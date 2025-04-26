@@ -17,6 +17,7 @@ type AuthService interface {
 	Register(ctx context.Context, user *dto.CreateUser) (*dto.User, string, error)
 	Login(ctx context.Context, email, password string) (*dto.LoginResponse, string, error)
 	Logout(ctx context.Context, oat string) error
+	ResetAuthOATCacheTTL(ctx context.Context, oat string, userID string) error
 }
 
 type authService struct {
@@ -88,4 +89,8 @@ func (s *authService) Login(ctx context.Context, email, password string) (*dto.L
 
 func (s *authService) Logout(ctx context.Context, oat string) error {
 	return s.cache.Delete(ctx, cache.GenerateKey(string(keys.AuthToken), oat))
+}
+
+func (s *authService) ResetAuthOATCacheTTL(ctx context.Context, oat string, userID string) error {
+	return s.cache.Set(ctx, cache.GenerateKey(string(keys.AuthToken), oat), []byte(userID), keys.AuthTokenDuration)
 }

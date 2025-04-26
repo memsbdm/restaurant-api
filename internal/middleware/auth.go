@@ -12,7 +12,7 @@ import (
 	"github.com/memsbdm/restaurant-api/pkg/security"
 )
 
-func AuthMiddleware(tokenSvc service.TokenService) Middle {
+func AuthMiddleware(appEnv string, tokenSvc service.TokenService, authSvc service.AuthService) Middle {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			oat, err := extractAuthOATFromRequest(r)
@@ -26,10 +26,22 @@ func AuthMiddleware(tokenSvc service.TokenService) Middle {
 				response.HandleError(w, response.ErrUnauthorized)
 				return
 			}
+
+			// Reset cookie expiration time
+			handler.SetAuthCookie(w, oat, appEnv)
+			// Enrich context with user ID and OAT
 			ctx := context.WithValue(r.Context(), keys.UserIDContextKey, userID)
 			decodedOAT, _ := security.DecodeTokenURLSafe(oat)
 			oat = strings.Split(decodedOAT, ".")[0]
 			ctx = context.WithValue(ctx, keys.AuthOATContextKey, oat)
+
+			// Reset the OAT cache TTL
+			err = authSvc.ResetAuthOATCacheTTL(r.Context(), oat, userID)
+			if err != nil {
+				response.HandleError(w, err)
+				return
+			}
+
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
