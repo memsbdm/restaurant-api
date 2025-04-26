@@ -6,7 +6,7 @@ CREATE TABLE roles (
 );
 
 INSERT INTO roles (name)
-VALUES ('ADMIN'),('USER');
+VALUES ('OWNER'), ('MANAGER');
 -- +goose StatementEnd
 
 -- +goose Down

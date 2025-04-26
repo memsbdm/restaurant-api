@@ -8,18 +8,20 @@ import (
 )
 
 type Middleware struct {
-	Auth    MiddlewareFunc
-	Guest   MiddlewareFunc
-	Logging Middle
+	Auth       MiddlewareFunc
+	Guest      MiddlewareFunc
+	Logging    Middle
+	Restaurant MiddlewareFunc
 }
 
 type MiddlewareFunc func(handler func(http.ResponseWriter, *http.Request)) http.Handler
 
 func New(cfg *config.Container, s *service.Services) *Middleware {
 	return &Middleware{
-		Auth:    newHandlerMiddleware(AuthMiddleware(s.TokenService)),
-		Guest:   newHandlerMiddleware(GuestMiddleware(s.TokenService)),
-		Logging: LoggingMiddleware,
+		Auth:       newHandlerMiddleware(AuthMiddleware(s.TokenService)),
+		Guest:      newHandlerMiddleware(GuestMiddleware(s.TokenService)),
+		Logging:    LoggingMiddleware,
+		Restaurant: newHandlerMiddleware(RestaurantMiddleware(cfg.App.Env, s.RestaurantService, s.RestaurantUserService)),
 	}
 }
 
@@ -39,4 +41,23 @@ func CreateStack(xs ...Middle) Middle {
 		}
 		return next
 	}
+}
+
+type HandlerMiddleware func(handler http.Handler) http.Handler
+
+func Chain(f http.HandlerFunc, middleware ...MiddlewareFunc) http.HandlerFunc {
+	for _, m := range middleware {
+		h := m(f)
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	return f
+}
+
+func ChainHandlerFunc(h http.Handler, middleware ...HandlerMiddleware) http.Handler {
+	for _, m := range middleware {
+		h = m(h)
+	}
+	return h
 }

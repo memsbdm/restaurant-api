@@ -15,7 +15,7 @@ var ErrInvalidCredentials = errors.New("invalid credentials")
 
 type AuthService interface {
 	Register(ctx context.Context, user *dto.CreateUser) (dto.User, string, error)
-	Login(ctx context.Context, email, password string) (dto.User, string, error)
+	Login(ctx context.Context, email, password string) (*dto.LoginResponse, string, error)
 	Logout(ctx context.Context, oat string) error
 }
 
@@ -53,23 +53,33 @@ func (s *authService) Register(ctx context.Context, user *dto.CreateUser) (dto.U
 	return createdUser, oat, nil
 }
 
-func (s *authService) Login(ctx context.Context, email, password string) (dto.User, string, error) {
+func (s *authService) Login(ctx context.Context, email, password string) (*dto.LoginResponse, string, error) {
 	fetchedUser, err := s.userService.GetByEmail(ctx, email)
 	if err != nil {
-		return dto.User{}, "", ErrInvalidCredentials
+		return nil, "", ErrInvalidCredentials
 	}
 
 	err = security.ComparePassword(fetchedUser.Password, password)
 	if err != nil {
-		return dto.User{}, "", ErrInvalidCredentials
+		return nil, "", ErrInvalidCredentials
 	}
 
 	oat, err := s.tokenService.GenerateOAT(ctx, keys.AuthToken, fetchedUser.ID.String(), keys.AuthTokenDuration)
 	if err != nil {
-		return dto.User{}, "", err
+		return nil, "", err
 	}
 
-	return fetchedUser, oat, nil
+	restaurants, err := s.userService.GetRestaurantsByUserID(ctx, fetchedUser.ID)
+	if err != nil {
+		return nil, "", err
+	}
+
+	loginResponse := &dto.LoginResponse{
+		User:        fetchedUser,
+		Restaurants: restaurants,
+	}
+
+	return loginResponse, oat, nil
 }
 
 func (s *authService) Logout(ctx context.Context, oat string) error {

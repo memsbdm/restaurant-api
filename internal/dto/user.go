@@ -18,16 +18,7 @@ type User struct {
 	AvatarURL       *string   `json:"avatar_url"`
 }
 
-func (u *User) ToUpdateParams() repository.UpdateUserParams {
-	return repository.UpdateUserParams{
-		ID:              u.ID,
-		Email:           u.Email,
-		IsEmailVerified: u.IsEmailVerified,
-		AvatarUrl:       u.AvatarURL,
-	}
-}
-
-func NewUser(user repository.User) User {
+func NewUser(user *repository.User) User {
 	return User{
 		ID:              user.ID,
 		CreatedAt:       user.CreatedAt,
@@ -37,6 +28,15 @@ func NewUser(user repository.User) User {
 		Password:        user.Password,
 		IsEmailVerified: user.IsEmailVerified,
 		AvatarURL:       user.AvatarUrl,
+	}
+}
+
+func (u *User) ToUpdateParams() repository.UpdateUserParams {
+	return repository.UpdateUserParams{
+		ID:              u.ID,
+		Email:           u.Email,
+		IsEmailVerified: u.IsEmailVerified,
+		AvatarUrl:       u.AvatarURL,
 	}
 }
 

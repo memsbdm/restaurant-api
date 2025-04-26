@@ -18,7 +18,7 @@ func New(cfg *config.Container, services *service.Services) *Handlers {
 	return &Handlers{
 		AuthHandler:        NewAuthHandler(cfg.App, services.AuthService),
 		GoogleHandler:      NewGoogleHandler(services.GoogleService),
-		RestaurantHandler:  NewRestaurantHandler(services.RestaurantService),
+		RestaurantHandler:  NewRestaurantHandler(cfg.App, services.RestaurantService),
 		VerifyEmailHandler: NewVerifyEmailHandler(services.UserService),
 	}
 }

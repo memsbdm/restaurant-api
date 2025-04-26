@@ -1,3 +1,12 @@
+-- name: GetRestaurantByID :one
+SELECT * FROM restaurants WHERE id = $1;
+
+-- name: GetRestaurantsByUserID :many
+SELECT r.*
+FROM restaurants r
+LEFT JOIN restaurant_users ru ON ru.restaurant_id = r.id
+WHERE ru.user_id = $1;
+
 -- name: IsRestaurantAlreadyTaken :one
 SELECT EXISTS (
     SELECT 1

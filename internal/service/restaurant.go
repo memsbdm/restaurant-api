@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
 	"github.com/google/uuid"
@@ -11,10 +12,15 @@ import (
 	"github.com/memsbdm/restaurant-api/internal/dto"
 )
 
-var ErrRestaurantAlreadyTaken = errors.New("restaurant already taken")
+var (
+	ErrRestaurantAlreadyTaken = errors.New("restaurant already taken")
+	ErrRestaurantNotFound     = errors.New("restaurant not found")
+)
 
 type RestaurantService interface {
 	Create(ctx context.Context, placeID string, userID uuid.UUID) (dto.Restaurant, error)
+	GetByID(ctx context.Context, id uuid.UUID) (dto.Restaurant, error)
+	GetRestaurantsByUserID(ctx context.Context, userID uuid.UUID) ([]dto.Restaurant, error)
 }
 
 type restaurantService struct {
@@ -27,6 +33,33 @@ func NewRestaurantService(db *database.DB, googleSvc GoogleService) RestaurantSe
 		db:        db,
 		googleSvc: googleSvc,
 	}
+}
+
+func (s *restaurantService) GetByID(ctx context.Context, id uuid.UUID) (dto.Restaurant, error) {
+	restaurant, err := s.db.Queries.GetRestaurantByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return dto.Restaurant{}, ErrRestaurantNotFound
+		}
+		return dto.Restaurant{}, err
+	}
+	return dto.NewRestaurant(&restaurant), nil
+}
+
+func (s *restaurantService) GetRestaurantsByUserID(ctx context.Context, userID uuid.UUID) ([]dto.Restaurant, error) {
+	restaurants, err := s.db.Queries.GetRestaurantsByUserID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrRestaurantNotFound
+		}
+		return nil, err
+	}
+
+	result := make([]dto.Restaurant, len(restaurants))
+	for _, restaurant := range restaurants {
+		result = append(result, dto.NewRestaurant(&restaurant))
+	}
+	return result, nil
 }
 
 func (s *restaurantService) Create(ctx context.Context, placeID string, userID uuid.UUID) (dto.Restaurant, error) {
@@ -62,7 +95,7 @@ func (s *restaurantService) Create(ctx context.Context, placeID string, userID u
 	err = qtx.AddRestaurantUser(ctx, repository.AddRestaurantUserParams{
 		RestaurantID: restaurant.ID,
 		UserID:       userID,
-		RoleID:       int16(enum.RoleAdmin),
+		RoleID:       int16(enum.RoleOwner),
 	})
 	if err != nil {
 		return dto.Restaurant{}, err
@@ -72,5 +105,5 @@ func (s *restaurantService) Create(ctx context.Context, placeID string, userID u
 		return dto.Restaurant{}, err
 	}
 
-	return dto.NewRestaurant(restaurant), nil
+	return dto.NewRestaurant(&restaurant), nil
 }

@@ -26,6 +26,7 @@ type UserService interface {
 	SendVerificationEmail(ctx context.Context, user dto.User) error
 	VerifyEmail(ctx context.Context, token string) (dto.User, error)
 	ResendVerificationEmail(ctx context.Context, userID uuid.UUID) error
+	GetRestaurantsByUserID(ctx context.Context, userID uuid.UUID) ([]dto.Restaurant, error)
 }
 
 type userService struct {
@@ -45,12 +46,12 @@ func NewUserService(cfg *config.App, db *database.DB, tokenSvc TokenService, mai
 }
 
 func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (dto.User, error) {
-	dbUser, err := s.db.Queries.GetUserById(ctx, id)
+	dbUser, err := s.db.Queries.GetUserByID(ctx, id)
 	if err != nil {
 		return dto.User{}, err
 	}
 
-	return dto.NewUser(dbUser), nil
+	return dto.NewUser(&dbUser), nil
 }
 
 func (s *userService) GetByEmail(ctx context.Context, email string) (dto.User, error) {
@@ -59,7 +60,7 @@ func (s *userService) GetByEmail(ctx context.Context, email string) (dto.User, e
 		return dto.User{}, err
 	}
 
-	return dto.NewUser(dbUser), nil
+	return dto.NewUser(&dbUser), nil
 }
 
 func (s *userService) Create(ctx context.Context, user *dto.CreateUser) (dto.User, error) {
@@ -84,7 +85,7 @@ func (s *userService) Create(ctx context.Context, user *dto.CreateUser) (dto.Use
 		return dto.User{}, err
 	}
 
-	return dto.NewUser(dbUser), nil
+	return dto.NewUser(&dbUser), nil
 }
 
 func (s *userService) Update(ctx context.Context, user *dto.User) (dto.User, error) {
@@ -93,7 +94,7 @@ func (s *userService) Update(ctx context.Context, user *dto.User) (dto.User, err
 		return dto.User{}, err
 	}
 
-	return dto.NewUser(dbUser), nil
+	return dto.NewUser(&dbUser), nil
 }
 
 func (s *userService) SendVerificationEmail(ctx context.Context, user dto.User) error {
@@ -125,13 +126,13 @@ func (s *userService) VerifyEmail(ctx context.Context, token string) (dto.User, 
 	}
 
 	userID := decodedToken
-	dbUser, err := s.db.Queries.GetUserById(ctx, uuid.MustParse(userID))
+	dbUser, err := s.db.Queries.GetUserByID(ctx, uuid.MustParse(userID))
 	if err != nil {
 		return dto.User{}, err
 	}
 
 	dbUser.IsEmailVerified = true
-	dbUserDTO := dto.NewUser(dbUser)
+	dbUserDTO := dto.NewUser(&dbUser)
 	updatedUser, err := s.db.Queries.UpdateUser(ctx, dbUserDTO.ToUpdateParams())
 	if err != nil {
 		return dto.User{}, err
@@ -142,11 +143,11 @@ func (s *userService) VerifyEmail(ctx context.Context, token string) (dto.User, 
 		return dto.User{}, err
 	}
 
-	return dto.NewUser(updatedUser), nil
+	return dto.NewUser(&updatedUser), nil
 }
 
 func (s *userService) ResendVerificationEmail(ctx context.Context, userID uuid.UUID) error {
-	dbUser, err := s.db.Queries.GetUserById(ctx, userID)
+	dbUser, err := s.db.Queries.GetUserByID(ctx, userID)
 	if err != nil {
 		return err
 	}
@@ -155,5 +156,19 @@ func (s *userService) ResendVerificationEmail(ctx context.Context, userID uuid.U
 		return ErrEmailAlreadyVerified
 	}
 
-	return s.SendVerificationEmail(ctx, dto.NewUser(dbUser))
+	return s.SendVerificationEmail(ctx, dto.NewUser(&dbUser))
+}
+
+func (s *userService) GetRestaurantsByUserID(ctx context.Context, userID uuid.UUID) ([]dto.Restaurant, error) {
+	dbRestaurants, err := s.db.Queries.GetRestaurantsByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	restaurants := make([]dto.Restaurant, len(dbRestaurants))
+	for i, dbRestaurant := range dbRestaurants {
+		restaurants[i] = dto.NewRestaurant(&dbRestaurant)
+	}
+
+	return restaurants, nil
 }

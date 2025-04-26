@@ -73,7 +73,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fetchedUser, oat, err := h.authSvc.Login(r.Context(), strings.TrimSpace(request.Email), request.Password)
+	loginResponse, oat, err := h.authSvc.Login(r.Context(), strings.TrimSpace(request.Email), request.Password)
 	if err != nil {
 		response.HandleError(w, err)
 		return
@@ -81,14 +81,15 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	if IsMobileRequest(r) {
 		response.HandleSuccess(w, http.StatusCreated, map[string]any{
-			"user":         fetchedUser,
+			"user":         loginResponse.User,
 			"access_token": oat,
+			"restaurants":  loginResponse.Restaurants,
 		})
 		return
 	}
 
 	setAuthCookie(w, oat, h.cfg.Env)
-	response.HandleSuccess(w, http.StatusCreated, fetchedUser)
+	response.HandleSuccess(w, http.StatusCreated, loginResponse)
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
@@ -104,19 +105,9 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.HandleSuccess(w, http.StatusNoContent, nil)
-}
-
-func setAuthCookie(w http.ResponseWriter, oat, appEnv string) {
-	cookie := &http.Cookie{
-		Name:     "go-session",
-		Value:    oat,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   appEnv == config.EnvProduction,
-		SameSite: http.SameSiteStrictMode,
-		MaxAge:   60 * 60 * 24 * 7,
+	if !IsMobileRequest(r) {
+		clearAuthCookie(w, h.cfg.Env)
 	}
 
-	http.SetCookie(w, cookie)
+	response.HandleSuccess(w, http.StatusNoContent, nil)
 }

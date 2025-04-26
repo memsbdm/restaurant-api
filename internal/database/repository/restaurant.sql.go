@@ -57,6 +57,72 @@ func (q *Queries) CreateRestaurant(ctx context.Context, arg CreateRestaurantPara
 	return i, err
 }
 
+const getRestaurantByID = `-- name: GetRestaurantByID :one
+SELECT id, created_at, updated_at, name, alias, description, address, lat, lng, phone, image_url, is_verified, place_id FROM restaurants WHERE id = $1
+`
+
+func (q *Queries) GetRestaurantByID(ctx context.Context, id uuid.UUID) (Restaurant, error) {
+	row := q.db.QueryRow(ctx, getRestaurantByID, id)
+	var i Restaurant
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Alias,
+		&i.Description,
+		&i.Address,
+		&i.Lat,
+		&i.Lng,
+		&i.Phone,
+		&i.ImageUrl,
+		&i.IsVerified,
+		&i.PlaceID,
+	)
+	return i, err
+}
+
+const getRestaurantsByUserID = `-- name: GetRestaurantsByUserID :many
+SELECT r.id, r.created_at, r.updated_at, r.name, r.alias, r.description, r.address, r.lat, r.lng, r.phone, r.image_url, r.is_verified, r.place_id
+FROM restaurants r
+LEFT JOIN restaurant_users ru ON ru.restaurant_id = r.id
+WHERE ru.user_id = $1
+`
+
+func (q *Queries) GetRestaurantsByUserID(ctx context.Context, userID uuid.UUID) ([]Restaurant, error) {
+	rows, err := q.db.Query(ctx, getRestaurantsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Restaurant
+	for rows.Next() {
+		var i Restaurant
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Alias,
+			&i.Description,
+			&i.Address,
+			&i.Lat,
+			&i.Lng,
+			&i.Phone,
+			&i.ImageUrl,
+			&i.IsVerified,
+			&i.PlaceID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const isRestaurantAlreadyTaken = `-- name: IsRestaurantAlreadyTaken :one
 SELECT EXISTS (
     SELECT 1

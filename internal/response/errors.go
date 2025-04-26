@@ -14,6 +14,9 @@ var (
 	ErrUnauthorized       = errors.New("unauthorized access")
 	ErrInternal           = errors.New("internal error")
 	ErrServiceUnavailable = errors.New("service unavailable")
+
+	// Middleware
+	ErrNoRestaurantFoundForUser = errors.New("no restaurant found for user")
 )
 
 var ErrToHttpStatusCode = map[error]int{
@@ -23,6 +26,9 @@ var ErrToHttpStatusCode = map[error]int{
 	ErrUnauthorized:       http.StatusUnauthorized,
 	ErrInternal:           http.StatusInternalServerError,
 	ErrServiceUnavailable: http.StatusServiceUnavailable,
+
+	// Middleware
+	ErrNoRestaurantFoundForUser: http.StatusForbidden,
 
 	// Conflict
 	service.ErrEmailConflict:          http.StatusConflict,

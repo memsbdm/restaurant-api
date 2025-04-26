@@ -27,7 +27,7 @@ type Restaurant struct {
 	Invites     []RestaurantInvite `json:"invites,omitempty"`
 }
 
-func NewRestaurant(restaurant repository.Restaurant) Restaurant {
+func NewRestaurant(restaurant *repository.Restaurant) Restaurant {
 	return Restaurant{
 		ID:          restaurant.ID,
 		CreatedAt:   restaurant.CreatedAt,

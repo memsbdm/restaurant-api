@@ -8,12 +8,13 @@ import (
 )
 
 type Services struct {
-	AuthService       AuthService
-	GoogleService     GoogleService
-	MailerService     MailerService
-	RestaurantService RestaurantService
-	TokenService      TokenService
-	UserService       UserService
+	AuthService           AuthService
+	GoogleService         GoogleService
+	MailerService         MailerService
+	RestaurantService     RestaurantService
+	RestaurantUserService RestaurantUserService
+	TokenService          TokenService
+	UserService           UserService
 }
 
 func New(cfg *config.Container, db *database.DB, cache cache.Cache, mailer mailer.Mailer) *Services {
@@ -23,13 +24,15 @@ func New(cfg *config.Container, db *database.DB, cache cache.Cache, mailer maile
 	userSvc := NewUserService(cfg.App, db, tokenSvc, mailerSvc)
 	authSvc := NewAuthService(cfg.Security, cache, userSvc, tokenSvc)
 	restaurantSvc := NewRestaurantService(db, googleSvc)
+	restaurantUserSvc := NewRestaurantUserService(db)
 
 	return &Services{
-		AuthService:       authSvc,
-		GoogleService:     googleSvc,
-		MailerService:     mailerSvc,
-		RestaurantService: restaurantSvc,
-		TokenService:      tokenSvc,
-		UserService:       userSvc,
+		AuthService:           authSvc,
+		GoogleService:         googleSvc,
+		MailerService:         mailerSvc,
+		RestaurantService:     restaurantSvc,
+		RestaurantUserService: restaurantUserSvc,
+		TokenService:          tokenSvc,
+		UserService:           userSvc,
 	}
 }

@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/memsbdm/restaurant-api/config"
 	"github.com/memsbdm/restaurant-api/internal/response"
 	"github.com/memsbdm/restaurant-api/internal/service"
 	"github.com/memsbdm/restaurant-api/internal/validation"
@@ -10,11 +11,13 @@ import (
 )
 
 type RestaurantHandler struct {
+	cfg           *config.App
 	restaurantSvc service.RestaurantService
 }
 
-func NewRestaurantHandler(restaurantSvc service.RestaurantService) *RestaurantHandler {
+func NewRestaurantHandler(cfg *config.App, restaurantSvc service.RestaurantService) *RestaurantHandler {
 	return &RestaurantHandler{
+		cfg:           cfg,
 		restaurantSvc: restaurantSvc,
 	}
 }
@@ -42,6 +45,10 @@ func (h *RestaurantHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		response.HandleError(w, err)
 		return
+	}
+
+	if !IsMobileRequest(r) {
+		SetActiveRestaurantCookie(w, restaurant.ID, h.cfg.Env)
 	}
 
 	response.HandleSuccess(w, http.StatusCreated, restaurant)

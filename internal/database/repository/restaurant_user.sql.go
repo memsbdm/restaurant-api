@@ -26,3 +26,38 @@ func (q *Queries) AddRestaurantUser(ctx context.Context, arg AddRestaurantUserPa
 	_, err := q.db.Exec(ctx, addRestaurantUser, arg.UserID, arg.RestaurantID, arg.RoleID)
 	return err
 }
+
+const getAnyRestaurantUserLinkByUserID = `-- name: GetAnyRestaurantUserLinkByUserID :one
+SELECT id, restaurant_id, user_id, role_id FROM restaurant_users
+WHERE user_id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetAnyRestaurantUserLinkByUserID(ctx context.Context, userID uuid.UUID) (RestaurantUser, error) {
+	row := q.db.QueryRow(ctx, getAnyRestaurantUserLinkByUserID, userID)
+	var i RestaurantUser
+	err := row.Scan(
+		&i.ID,
+		&i.RestaurantID,
+		&i.UserID,
+		&i.RoleID,
+	)
+	return i, err
+}
+
+const getRestaurantUserRoleID = `-- name: GetRestaurantUserRoleID :one
+SELECT role_id FROM restaurant_users 
+WHERE restaurant_id = $1 AND user_id = $2
+`
+
+type GetRestaurantUserRoleIDParams struct {
+	RestaurantID uuid.UUID
+	UserID       uuid.UUID
+}
+
+func (q *Queries) GetRestaurantUserRoleID(ctx context.Context, arg GetRestaurantUserRoleIDParams) (int16, error) {
+	row := q.db.QueryRow(ctx, getRestaurantUserRoleID, arg.RestaurantID, arg.UserID)
+	var role_id int16
+	err := row.Scan(&role_id)
+	return role_id, err
+}
