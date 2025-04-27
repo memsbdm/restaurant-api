@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"html/template"
 	"log"
 
@@ -39,7 +40,7 @@ func (s *mailerService) Send(mail *mailer.Mail) error {
 		Body:    mail.Body,
 	})
 	if err != nil {
-		return ErrMailerUnavailable
+		return fmt.Errorf("%w: failed to send email: %v", ErrMailerUnavailable, err)
 	}
 
 	return nil
@@ -49,8 +50,7 @@ func (s *mailerService) RenderTemplate(name string, data any) (string, error) {
 	var buf bytes.Buffer
 	err := s.tmpl.ExecuteTemplate(&buf, name, data)
 	if err != nil {
-		log.Printf("failed to render template %s: %v", name, err)
-		return "", err
+		return "", fmt.Errorf("failed to render template %s: %w", name, err)
 	}
 
 	return buf.String(), nil

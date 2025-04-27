@@ -70,11 +70,8 @@ func (m *mailer) Send(mail *Mail) error {
 
 	msgID, err := m.session.SendEmail(sesInput)
 	if err != nil {
-		log.Printf("error sending email: %v - msgId: %s", err, msgID.String())
-		return err
+		return fmt.Errorf("error sending email: %w - msgId: %s", err, msgID.String())
 	}
-
-	log.Printf("mail sent: %s", msgID.String())
 
 	return nil
 }

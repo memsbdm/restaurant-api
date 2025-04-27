@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/memsbdm/restaurant-api/internal/database"
@@ -37,7 +38,7 @@ func (s *restaurantUserService) GetRestaurantUserRoleID(ctx context.Context, res
 		if err == sql.ErrNoRows {
 			return 0, ErrRestaurantOrUserNotFound
 		}
-		return 0, err
+		return 0, fmt.Errorf("error fetching restaurant user role ID for restaurant ID %s and user ID %s: %w", restaurantID, userID, err)
 	}
 
 	return int(role), nil
@@ -49,7 +50,7 @@ func (s *restaurantUserService) GetAnyRestaurantUserLinkByUserID(ctx context.Con
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrRestaurantOrUserNotFound
 		}
-		return nil, err
+		return nil, fmt.Errorf("error fetching restaurant user link by user ID %s: %w", userID, err)
 	}
 
 	return dto.NewRestaurantUser(&dbRestaurantUser), nil

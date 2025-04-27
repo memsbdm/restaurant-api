@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -58,8 +57,7 @@ func (s *googleService) Autocomplete(ctx context.Context, query string) ([]*dto.
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("google autocomplete API returned status: %s", resp.Status)
-		return nil, ErrGoogleServiceUnavailable
+		return nil, fmt.Errorf("%w: google autocomplete API returned status: %s", ErrGoogleServiceUnavailable, resp.Status)
 	}
 
 	var result struct {
@@ -73,8 +71,7 @@ func (s *googleService) Autocomplete(ctx context.Context, query string) ([]*dto.
 		} `json:"predictions"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Printf("Error decoding Google API response: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("error decoding Google API response: %w", err)
 	}
 
 	predictions := make([]*dto.GooglePrediction, len(result.Predictions))
@@ -110,8 +107,7 @@ func (s *googleService) GetDetails(ctx context.Context, placeID string) (*dto.Cr
 		if resp.StatusCode == http.StatusBadRequest {
 			return nil, ErrGoogleInvalidPlaceID
 		}
-		log.Printf("google place details API returned status: %s", resp.Status)
-		return nil, ErrGoogleServiceUnavailable
+		return nil, fmt.Errorf("%w: google place details API returned status: %s", ErrGoogleServiceUnavailable, resp.Status)
 	}
 
 	var result struct {
@@ -128,8 +124,7 @@ func (s *googleService) GetDetails(ctx context.Context, placeID string) (*dto.Cr
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Printf("Error decoding Google API response: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("error decoding Google API response: %w", err)
 	}
 
 	restaurant := &dto.CreateRestaurant{

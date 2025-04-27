@@ -85,7 +85,7 @@ func extractAuthOATFromRequest(r *http.Request) (string, error) {
 func getAuthOATFromCookie(r *http.Request) (string, error) {
 	cookie, err := r.Cookie("go-session")
 	if err != nil {
-		return "", err
+		return "", response.ErrUnauthorized
 	}
 
 	return cookie.Value, nil

@@ -49,8 +49,7 @@ func NewRedis(cfg *config.Cache) *cache {
 func (c *cache) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
 	err := c.client.Set(ctx, key, value, ttl).Err()
 	if err != nil {
-		log.Printf("error during cache set: %v", err)
-		return err
+		return fmt.Errorf("error during cache set: %w", err)
 	}
 	return nil
 }
@@ -61,8 +60,7 @@ func (c *cache) Get(ctx context.Context, key string) ([]byte, error) {
 		if errors.Is(err, redis.Nil) {
 			return nil, ErrCacheNotFound
 		}
-		log.Printf("error during cache get: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("error during cache get: %w", err)
 	}
 	return []byte(res), nil
 }
@@ -70,8 +68,7 @@ func (c *cache) Get(ctx context.Context, key string) ([]byte, error) {
 func (c *cache) Delete(ctx context.Context, key string) error {
 	err := c.client.Del(ctx, key).Err()
 	if err != nil {
-		log.Printf("error during cache delete: %v", err)
-		return err
+		return fmt.Errorf("error during cache delete: %w", err)
 	}
 	return nil
 }
@@ -79,8 +76,7 @@ func (c *cache) Delete(ctx context.Context, key string) error {
 func (c *cache) Close() error {
 	err := c.client.Close()
 	if err != nil {
-		log.Printf("error closing the cache: %v", err)
-		return err
+		return fmt.Errorf("error closing the cache: %w", err)
 	}
 	log.Printf("Cache connection closed")
 	return nil

@@ -3,7 +3,6 @@ package handler
 import (
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/memsbdm/restaurant-api/internal/response"
 	"github.com/memsbdm/restaurant-api/internal/service"
 	"github.com/memsbdm/restaurant-api/pkg/keys"
@@ -36,13 +35,13 @@ func (h *VerifyEmailHandler) VerifyEmail(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *VerifyEmailHandler) ResendVerificationEmail(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(keys.UserIDContextKey).(string)
-	if userID == "" {
-		response.HandleError(w, response.ErrBadRequest)
+	userID, err := keys.GetUserIDFromContext(r.Context())
+	if err != nil {
+		response.HandleError(w, err)
 		return
 	}
 
-	err := h.userService.ResendVerificationEmail(r.Context(), uuid.MustParse(userID))
+	err = h.userService.ResendVerificationEmail(r.Context(), userID)
 	if err != nil {
 		response.HandleError(w, err)
 		return

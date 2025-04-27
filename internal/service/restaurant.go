@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/memsbdm/restaurant-api/internal/database"
@@ -42,7 +43,7 @@ func (s *restaurantService) GetByID(ctx context.Context, id uuid.UUID) (*dto.Res
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrRestaurantNotFound
 		}
-		return nil, err
+		return nil, fmt.Errorf("error fetching restaurant by ID %s: %w", id, err)
 	}
 
 	return dto.NewRestaurant(&dbRestaurant), nil
@@ -54,7 +55,7 @@ func (s *restaurantService) GetRestaurantsByUserID(ctx context.Context, userID u
 		if errors.Is(err, sql.ErrNoRows) {
 			return []*dto.Restaurant{}, ErrNoRestaurantFoundForUser
 		}
-		return nil, err
+		return nil, fmt.Errorf("error fetching restaurants for user ID %s: %w", userID, err)
 	}
 
 	restaurants := make([]*dto.Restaurant, len(dbRestaurants))
@@ -83,7 +84,7 @@ func (s *restaurantService) Create(ctx context.Context, placeID string, userID u
 		UserID:  userID,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error checking if restaurant is already taken: %w", err)
 	}
 	if taken {
 		return nil, ErrRestaurantAlreadyTaken
@@ -91,7 +92,7 @@ func (s *restaurantService) Create(ctx context.Context, placeID string, userID u
 
 	restaurant, err := qtx.CreateRestaurant(ctx, createRestaurantDTO.ToParams())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating restaurant: %w", err)
 	}
 
 	err = qtx.AddRestaurantUser(ctx, repository.AddRestaurantUserParams{
@@ -100,7 +101,7 @@ func (s *restaurantService) Create(ctx context.Context, placeID string, userID u
 		RoleID:       int16(enum.RoleOwner),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error adding restaurant user: %w", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {

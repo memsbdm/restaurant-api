@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/memsbdm/restaurant-api/internal/database"
@@ -27,8 +27,7 @@ func NewMenuService(db *database.DB) *menuService {
 func (s *menuService) Create(ctx context.Context, name string, restaurantID uuid.UUID) (*dto.Menu, error) {
 	menuAlreadyExists, err := s.db.Queries.MenuExistsForRestaurantID(ctx, restaurantID)
 	if err != nil {
-		log.Printf("Error checking if menu exists for restaurant ID %s: %v", restaurantID, err)
-		return nil, err
+		return nil, fmt.Errorf("error checking if menu exists for restaurant ID %s: %w", restaurantID, err)
 	}
 
 	dbCreatedMenu, err := s.db.Queries.CreateMenu(ctx, repository.CreateMenuParams{
@@ -37,8 +36,7 @@ func (s *menuService) Create(ctx context.Context, name string, restaurantID uuid
 		RestaurantID: restaurantID,
 	})
 	if err != nil {
-		log.Printf("Error creating menu for restaurant ID %s: %v", restaurantID, err)
-		return nil, err
+		return nil, fmt.Errorf("error creating menu for restaurant ID %s: %w", restaurantID, err)
 	}
 	return dto.NewMenu(&dbCreatedMenu), nil
 }

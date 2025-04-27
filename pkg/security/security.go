@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"log"
+	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -13,8 +13,7 @@ import (
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
-		log.Printf("error during password hash: %v", err)
-		return "", err
+		return "", fmt.Errorf("error during password hash: %w", err)
 	}
 
 	return string(bytes), nil
@@ -27,8 +26,7 @@ func ComparePassword(hashedPassword, password string) error {
 func GenerateRandomString(length int) (string, error) {
 	b := make([]byte, length)
 	if _, err := rand.Read(b); err != nil {
-		log.Printf("error during random string generation: %v", err)
-		return "", err
+		return "", fmt.Errorf("error during random string generation: %w", err)
 	}
 
 	return base64.URLEncoding.EncodeToString(b), nil

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/memsbdm/restaurant-api/config"
@@ -47,7 +48,7 @@ func NewUserService(cfg *config.App, db *database.DB, tokenSvc TokenService, mai
 func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (*dto.User, error) {
 	dbUser, err := s.db.Queries.GetUserByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error fetching user by ID %s: %w", id, err)
 	}
 
 	return dto.NewUser(&dbUser), nil
@@ -56,7 +57,7 @@ func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (*dto.User, err
 func (s *userService) GetByEmail(ctx context.Context, email string) (*dto.User, error) {
 	dbUser, err := s.db.Queries.GetUserByEmail(ctx, email)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error fetching user by email %s: %w", email, err)
 	}
 
 	return dto.NewUser(&dbUser), nil
@@ -65,7 +66,7 @@ func (s *userService) GetByEmail(ctx context.Context, email string) (*dto.User, 
 func (s *userService) Create(ctx context.Context, user *dto.CreateUser) (*dto.User, error) {
 	emailTaken, err := s.db.Queries.UserEmailTaken(ctx, user.Email)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error checking if email %s is taken: %w", user.Email, err)
 	}
 
 	if emailTaken {
@@ -81,7 +82,7 @@ func (s *userService) Create(ctx context.Context, user *dto.CreateUser) (*dto.Us
 
 	dbUser, err := s.db.Queries.CreateUser(ctx, user.ToParams())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating user: %w", err)
 	}
 
 	return dto.NewUser(&dbUser), nil
@@ -90,7 +91,7 @@ func (s *userService) Create(ctx context.Context, user *dto.CreateUser) (*dto.Us
 func (s *userService) Update(ctx context.Context, user *dto.User) (*dto.User, error) {
 	dbUser, err := s.db.Queries.UpdateUser(ctx, user.ToUpdateParams())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error updating user: %w", err)
 	}
 
 	return dto.NewUser(&dbUser), nil
@@ -127,14 +128,14 @@ func (s *userService) VerifyEmail(ctx context.Context, token string) (*dto.User,
 	userID := decodedToken
 	dbUser, err := s.db.Queries.GetUserByID(ctx, uuid.MustParse(userID))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error fetching user by ID %s: %w", userID, err)
 	}
 
 	dbUser.IsEmailVerified = true
 	dbUserDTO := dto.NewUser(&dbUser)
 	updatedUser, err := s.db.Queries.UpdateUser(ctx, dbUserDTO.ToUpdateParams())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error updating user: %w", err)
 	}
 
 	err = s.tokenSvc.RevokeSPT(ctx, keys.EmailVerification, userID)
@@ -148,7 +149,7 @@ func (s *userService) VerifyEmail(ctx context.Context, token string) (*dto.User,
 func (s *userService) ResendVerificationEmail(ctx context.Context, userID uuid.UUID) error {
 	dbUser, err := s.db.Queries.GetUserByID(ctx, userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("error fetching user by ID %s: %w", userID, err)
 	}
 
 	if dbUser.IsEmailVerified {
