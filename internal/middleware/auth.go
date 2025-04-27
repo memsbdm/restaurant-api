@@ -83,7 +83,7 @@ func extractAuthOATFromRequest(r *http.Request) (string, error) {
 }
 
 func getAuthOATFromCookie(r *http.Request) (string, error) {
-	cookie, err := r.Cookie("go-session")
+	cookie, err := r.Cookie(keys.AuthOATCookieName)
 	if err != nil {
 		return "", response.ErrUnauthorized
 	}
@@ -92,7 +92,7 @@ func getAuthOATFromCookie(r *http.Request) (string, error) {
 }
 
 func getAuthOATFromHeader(r *http.Request) (string, error) {
-	authHeader := r.Header.Get("Authorization")
+	authHeader := r.Header.Get(keys.AuthorizationHeaderName)
 	if authHeader == "" {
 		return "", response.ErrUnauthorized
 	}

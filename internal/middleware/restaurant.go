@@ -13,11 +13,6 @@ import (
 	"github.com/memsbdm/restaurant-api/pkg/keys"
 )
 
-const (
-	ActiveRestaurantIDHeader     = "Active-Restaurant-ID"
-	ActiveRestaurantIDCookieName = "active_restaurant"
-)
-
 func RestaurantMiddleware(appEnv string, restaurantSvc service.RestaurantService, restaurantUserSvc service.RestaurantUserService) Middle {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +81,7 @@ func extractActiveRestaurantIDFromRequest(r *http.Request) (uuid.UUID, error) {
 }
 
 func getActiveRestaurantIDFromCookie(r *http.Request) (uuid.UUID, error) {
-	cookie, err := r.Cookie(ActiveRestaurantIDCookieName)
+	cookie, err := r.Cookie(keys.ActiveRestaurantCookieName)
 	if err != nil {
 		return uuid.Nil, errors.New("active restaurant cookie not found")
 	}
@@ -100,7 +95,7 @@ func getActiveRestaurantIDFromCookie(r *http.Request) (uuid.UUID, error) {
 }
 
 func getActiveRestaurantIDFromHeader(r *http.Request) (uuid.UUID, error) {
-	restaurantIDstr := r.Header.Get(ActiveRestaurantIDHeader)
+	restaurantIDstr := r.Header.Get(keys.ActiveRestaurantHeaderName)
 	if restaurantIDstr == "" {
 		return uuid.Nil, errors.New("active restaurant header not found")
 	}
@@ -122,7 +117,7 @@ func enrichContextWithRestaurantInfos(ctx context.Context, restaurant *dto.Resta
 
 func sendActiveRestaurantToClient(w http.ResponseWriter, r *http.Request, appEnv string, restaurantID uuid.UUID) {
 	if handler.IsMobileRequest(r) {
-		w.Header().Set(ActiveRestaurantIDHeader, restaurantID.String())
+		w.Header().Set(keys.ActiveRestaurantHeaderName, restaurantID.String())
 		return
 	}
 	handler.SetActiveRestaurantCookie(w, restaurantID, appEnv)

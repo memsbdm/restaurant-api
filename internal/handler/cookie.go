@@ -5,11 +5,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/memsbdm/restaurant-api/config"
+	"github.com/memsbdm/restaurant-api/pkg/keys"
 )
 
 func SetActiveRestaurantCookie(w http.ResponseWriter, restaurantID uuid.UUID, appEnv string) {
 	cookie := &http.Cookie{
-		Name:     "active_restaurant",
+		Name:     keys.ActiveRestaurantCookieName,
 		Value:    restaurantID.String(),
 		Path:     "/",
 		HttpOnly: true,
@@ -22,7 +23,7 @@ func SetActiveRestaurantCookie(w http.ResponseWriter, restaurantID uuid.UUID, ap
 
 func SetAuthCookie(w http.ResponseWriter, oat, appEnv string) {
 	cookie := &http.Cookie{
-		Name:     "go-session",
+		Name:     keys.AuthOATCookieName,
 		Value:    oat,
 		Path:     "/",
 		HttpOnly: true,
@@ -36,7 +37,7 @@ func SetAuthCookie(w http.ResponseWriter, oat, appEnv string) {
 
 func clearAuthCookie(w http.ResponseWriter, appEnv string) {
 	cookie := &http.Cookie{
-		Name:     "go-session",
+		Name:     keys.AuthOATCookieName,
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
