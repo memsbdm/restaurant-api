@@ -22,6 +22,9 @@ func registerRoutes(h *handler.Handlers, m *middleware.Middleware) http.Handler 
 	// Restaurants
 	r.Handle("POST /restaurants", m.Auth(h.RestaurantHandler.Create))
 
+	// Menus
+	r.Handle("POST /menus", middleware.Chain(h.MenuHandler.Create, m.Restaurant, m.Auth))
+
 	// Google
 	r.Handle("GET /google/autocomplete", middleware.Chain(h.GoogleHandler.Autocomplete, m.Auth))
 

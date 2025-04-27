@@ -10,6 +10,7 @@ import (
 type Handlers struct {
 	AuthHandler        *AuthHandler
 	GoogleHandler      *GoogleHandler
+	MenuHandler        *MenuHandler
 	RestaurantHandler  *RestaurantHandler
 	VerifyEmailHandler *VerifyEmailHandler
 }
@@ -18,6 +19,7 @@ func New(cfg *config.Container, services *service.Services) *Handlers {
 	return &Handlers{
 		AuthHandler:        NewAuthHandler(cfg.App, services.AuthService),
 		GoogleHandler:      NewGoogleHandler(services.GoogleService),
+		MenuHandler:        NewMenuHandler(services.MenuService),
 		RestaurantHandler:  NewRestaurantHandler(cfg.App, services.RestaurantService),
 		VerifyEmailHandler: NewVerifyEmailHandler(services.UserService),
 	}

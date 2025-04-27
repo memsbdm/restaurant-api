@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -38,7 +37,6 @@ func RestaurantMiddleware(appEnv string, restaurantSvc service.RestaurantService
 					// User belongs to the restaurant
 					restaurant, err := restaurantSvc.GetByID(ctx, restaurantID)
 					if err == nil {
-						fmt.Println("User belongs to the restaurant")
 						ctx = enrichContextWithRestaurantInfos(ctx, restaurant, roleID)
 						sendActiveRestaurantToClient(w, r, appEnv, restaurant.ID)
 						next.ServeHTTP(w, r.WithContext(ctx))

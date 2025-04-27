@@ -41,7 +41,7 @@ func GetRestaurantIDFromContext(ctx context.Context) (uuid.UUID, error) {
 		return uuid.Nil, errors.New("restaurant ID not found in context")
 	}
 
-	return uuid.MustParse(val.(string)), nil
+	return val.(uuid.UUID), nil
 }
 
 func GetUserRoleIDFromContext(ctx context.Context) (int16, error) {

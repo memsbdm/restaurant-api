@@ -31,8 +31,9 @@ type Category struct {
 
 type Menu struct {
 	ID           int32
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 	Name         string
-	MenuOrder    int16
 	IsActive     bool
 	RestaurantID uuid.UUID
 }
